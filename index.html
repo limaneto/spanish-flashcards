@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spanish Flashcards</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --surface: #ffffff;
+    --surface-back: #fff8ec;
+    --text: #2b2620;
+    --text-muted: #8a8177;
+    --accent: #e0532f;
+    --accent-soft: #fbe6df;
+    --green: #2f9e63;
+    --green-soft: #e2f4ea;
+    --border: #e8e1d7;
+    --shadow: 0 10px 30px rgba(43, 38, 32, 0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1916;
+      --surface: #2a2622;
+      --surface-back: #322b21;
+      --text: #f0eae2;
+      --text-muted: #9c9288;
+      --accent: #f0764f;
+      --accent-soft: #443027;
+      --green: #4cc084;
+      --green-soft: #253c30;
+      --border: #3a342e;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  button { touch-action: manipulation; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  header {
+    width: 100%;
+    max-width: 680px;
+    padding: 28px 20px 8px;
+    text-align: center;
+  }
+  h1 { margin: 0 0 4px; font-size: clamp(1.25rem, 4vw, 1.5rem); letter-spacing: -0.01em; }
+  h1 .flag { font-size: 1.2rem; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+
+  .controls {
+    width: 100%;
+    max-width: 680px;
+    padding: 16px 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+  select, .pill-btn {
+    font: inherit;
+    font-size: 0.875rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .pill-btn:hover, select:hover { border-color: var(--accent); }
+  .pill-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  label.toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.875rem; color: var(--text-muted); cursor: pointer;
+    padding: 8px 4px;
+  }
+  label.toggle input { accent-color: var(--accent); cursor: pointer; }
+
+  .progress-wrap {
+    width: 100%;
+    max-width: 680px;
+    padding: 18px 20px 0;
+  }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 6px; border-radius: 3px; background: var(--border); overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  main {
+    width: 100%;
+    max-width: 680px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    flex: 1;
+  }
+
+  .card-scene {
+    width: 100%;
+    max-width: 520px;
+    perspective: 1200px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    display: grid;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+  }
+  .card-scene.flipped .card-inner { transform: rotateY(180deg); }
+  /* Both faces share one grid cell, so the tallest face sets the card height. */
+  .card-face {
+    grid-area: 1 / 1;
+    position: relative;
+    min-height: 300px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 52px 28px 44px;
+    text-align: center;
+  }
+  .card-front { background: var(--surface); }
+  .card-back { background: var(--surface-back); transform: rotateY(180deg); }
+  .card-lang {
+    position: absolute; top: 18px;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .card-known-badge {
+    position: absolute; top: 14px; right: 18px;
+    font-size: 0.75rem; color: var(--green);
+    display: none;
+  }
+  .card-scene.known .card-known-badge { display: block; }
+  .card-word {
+    font-size: clamp(1.4rem, 4.5vw + 0.5rem, 2.2rem);
+    font-weight: 700; letter-spacing: -0.01em; line-height: 1.2;
+    overflow-wrap: break-word; max-width: 100%;
+  }
+  .card-example {
+    font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+    font-style: italic;
+    color: var(--text-muted);
+    white-space: pre-line;
+    line-height: 1.55;
+  }
+  .card-note { font-size: 0.8rem; color: var(--text-muted); opacity: 0.85; }
+  .card-hint {
+    position: absolute; bottom: 16px;
+    font-size: 0.75rem; color: var(--text-muted);
+  }
+
+  .nav-row {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .nav-btn {
+    font: inherit; font-size: 1.1rem;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .card-counter { font-size: 0.875rem; color: var(--text-muted); min-width: 70px; text-align: center; }
+
+  .answer-row { display: flex; gap: 14px; }
+  .answer-btn {
+    font: inherit; font-size: 0.95rem; font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.08s ease;
+  }
+  .answer-btn:active { transform: scale(0.97); }
+  .answer-btn.again { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .answer-btn.got-it { background: var(--green-soft); color: var(--green); border-color: var(--green); }
+  .answer-btn kbd {
+    font-family: inherit; font-size: 0.72rem;
+    opacity: 0.65; margin-left: 6px;
+    border: 1px solid currentColor; border-radius: 4px; padding: 1px 5px;
+  }
+
+  .done-state {
+    display: none;
+    flex-direction: column; align-items: center; gap: 14px;
+    text-align: center; padding: 40px 20px;
+  }
+  .done-state .emoji { font-size: 3rem; }
+  .done-state p { color: var(--text-muted); margin: 0; }
+
+  footer {
+    padding: 16px 20px 28px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.7;
+  }
+  footer kbd {
+    font-family: inherit;
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 6px; background: var(--surface);
+  }
+
+  @media (max-width: 480px) {
+    header { padding: 20px 16px 4px; }
+    .controls { padding: 12px 16px 0; }
+    .controls select { width: 100%; }
+    .progress-wrap { padding: 14px 16px 0; }
+    main { padding: 18px 14px; gap: 16px; }
+    .card-face { min-height: 260px; padding: 46px 20px 40px; }
+    .nav-row { gap: 10px; }
+    .answer-btn { padding: 10px 18px; }
+    footer { padding: 12px 16px 22px; }
+  }
+  @media (max-height: 620px) {
+    header { padding-top: 14px; }
+    main { padding-top: 12px; gap: 12px; }
+    .card-face { min-height: 220px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="flag">🇪🇸</span> Spanish Flashcards</h1>
+  <p class="subtitle">The 200 most useful Spanish nouns &amp; expressions. Click a card to flip — progress is saved in your browser.</p>
+</header>
+
+<div class="controls">
+  <select id="deck-select" aria-label="Choose deck"></select>
+  <button class="pill-btn" id="direction-btn" title="Swap question/answer language">ES → EN</button>
+  <button class="pill-btn" id="shuffle-btn" title="Shuffle deck (S)">🔀 Shuffle</button>
+  <label class="toggle"><input type="checkbox" id="skip-known" /> Skip known</label>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="progress-text">0 / 0 known</span>
+    <button class="pill-btn" id="reset-btn" style="font-size:0.75rem; padding:4px 10px;">Reset progress</button>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<main>
+  <div class="card-scene" id="card" tabindex="0" role="button" aria-label="Flashcard, press space to flip">
+    <div class="card-inner">
+      <div class="card-face card-front">
+        <span class="card-lang" id="front-lang">Español</span>
+        <span class="card-known-badge">✓ known</span>
+        <div class="card-word" id="front-word"></div>
+        <div class="card-hint">click or press space to flip</div>
+      </div>
+      <div class="card-face card-back">
+        <span class="card-lang" id="back-lang">English</span>
+        <div class="card-word" id="back-word"></div>
+        <div class="card-example" id="back-example"></div>
+        <div class="card-note" id="back-note"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="done-state" id="done-state">
+    <div class="emoji">🎉</div>
+    <h2>¡Felicidades!</h2>
+    <p>You know every card in this deck.<br/>Pick another deck, or reset progress to review again.</p>
+  </div>
+
+  <div class="nav-row" id="nav-row">
+    <button class="nav-btn" id="prev-btn" title="Previous (←)">←</button>
+    <span class="card-counter" id="card-counter"></span>
+    <button class="nav-btn" id="next-btn" title="Next (→)">→</button>
+  </div>
+
+  <div class="answer-row" id="answer-row">
+    <button class="answer-btn again" id="again-btn">Again <kbd>1</kbd></button>
+    <button class="answer-btn got-it" id="got-it-btn">Got it <kbd>2</kbd></button>
+  </div>
+</main>
+
+<footer>
+  Shortcuts: <kbd>space</kbd> flip · <kbd>←</kbd><kbd>→</kbd> navigate · <kbd>1</kbd> again · <kbd>2</kbd> got it · <kbd>S</kbd> shuffle
+</footer>
+
+<script>
+const DECKS = [
+  {
+    name: "People & Family",
+    cards: [
+      { es: "el hombre", en: "man", ex: "Ese hombre es muy alto.\nThat man is very tall." },
+      { es: "la mujer", en: "woman", ex: "La mujer lee un libro.\nThe woman is reading a book." },
+      { es: "el niño / la niña", en: "boy / girl", ex: "El niño juega en el parque.\nThe boy plays in the park." },
+      { es: "el amigo / la amiga", en: "friend", ex: "Mi amigo vive en Madrid.\nMy friend lives in Madrid." },
+      { es: "la familia", en: "family", ex: "Mi familia es muy grande.\nMy family is very big." },
+      { es: "la madre", en: "mother", ex: "Mi madre cocina muy bien.\nMy mother cooks very well.", note: "informal: mamá" },
+      { es: "el padre", en: "father", ex: "Mi padre trabaja hoy.\nMy father is working today.", note: "informal: papá; los padres = parents" },
+      { es: "el hijo / la hija", en: "son / daughter", ex: "Su hija tiene cinco años.\nHer daughter is five years old." },
+      { es: "el hermano / la hermana", en: "brother / sister", ex: "Tengo dos hermanos.\nI have two brothers." },
+      { es: "el abuelo / la abuela", en: "grandfather / grandmother", ex: "Mi abuela hace un pastel.\nMy grandmother is making a cake." },
+      { es: "el esposo / la esposa", en: "husband / wife", ex: "Su esposo se llama Juan.\nHer husband's name is Juan.", note: "also: el marido" },
+      { es: "la gente", en: "people", ex: "Hay mucha gente en la calle.\nThere are a lot of people in the street.", note: "singular in Spanish: la gente es…" },
+      { es: "la persona", en: "person", ex: "Es una persona muy amable.\nHe/she is a very kind person." },
+      { es: "el señor", en: "sir / Mr.", ex: "El señor García está aquí.\nMr. García is here." },
+      { es: "la señora", en: "madam / Mrs.", ex: "La señora espera el tren.\nThe lady is waiting for the train." },
+      { es: "el nombre", en: "name", ex: "¿Cuál es tu nombre?\nWhat is your name?" },
+      { es: "el vecino / la vecina", en: "neighbor", ex: "Mi vecino tiene un perro.\nMy neighbor has a dog." },
+      { es: "el jefe / la jefa", en: "boss", ex: "El jefe llega a las nueve.\nThe boss arrives at nine." },
+      { es: "el médico / la médica", en: "doctor", ex: "El médico trabaja en el hospital.\nThe doctor works at the hospital." },
+      { es: "el bebé", en: "baby", ex: "El bebé duerme ahora.\nThe baby is sleeping now." }
+    ]
+  },
+  {
+    name: "Home & Everyday Objects",
+    cards: [
+      { es: "la casa", en: "house / home", ex: "Mi casa está cerca del mar.\nMy house is near the sea.", note: "en casa = at home" },
+      { es: "la puerta", en: "door", ex: "La puerta está abierta.\nThe door is open." },
+      { es: "la ventana", en: "window", ex: "Abre la ventana, por favor.\nOpen the window, please." },
+      { es: "la mesa", en: "table", ex: "El libro está en la mesa.\nThe book is on the table." },
+      { es: "la silla", en: "chair", ex: "Esta silla es muy cómoda.\nThis chair is very comfortable." },
+      { es: "la cama", en: "bed", ex: "Voy a la cama temprano.\nI go to bed early." },
+      { es: "la cocina", en: "kitchen", ex: "Mi madre está en la cocina.\nMy mother is in the kitchen." },
+      { es: "el baño", en: "bathroom", ex: "¿Dónde está el baño?\nWhere is the bathroom?" },
+      { es: "la habitación", en: "room / bedroom", ex: "La habitación tiene dos camas.\nThe room has two beds.", note: "also: el cuarto" },
+      { es: "la llave", en: "key", ex: "No encuentro mis llaves.\nI can't find my keys." },
+      { es: "la luz", en: "light", ex: "Apaga la luz, por favor.\nTurn off the light, please." },
+      { es: "el teléfono", en: "phone", ex: "Mi teléfono no funciona.\nMy phone doesn't work.", note: "cell phone: el móvil (Spain) / el celular (LatAm)" },
+      { es: "la ropa", en: "clothes", ex: "Necesito lavar la ropa.\nI need to wash the clothes." },
+      { es: "el zapato", en: "shoe", ex: "Estos zapatos son nuevos.\nThese shoes are new." },
+      { es: "la cosa", en: "thing", ex: "Tengo muchas cosas que hacer.\nI have many things to do." },
+      { es: "el libro", en: "book", ex: "Este libro es muy interesante.\nThis book is very interesting." },
+      { es: "el papel", en: "paper", ex: "Escribe tu nombre en el papel.\nWrite your name on the paper." },
+      { es: "la bolsa", en: "bag", ex: "La bolsa está llena de fruta.\nThe bag is full of fruit." },
+      { es: "el coche", en: "car", ex: "El coche es rojo.\nThe car is red.", note: "LatAm: el carro / el auto" },
+      { es: "el regalo", en: "gift / present", ex: "Este regalo es para ti.\nThis gift is for you." }
+    ]
+  },
+  {
+    name: "Food & Drink",
+    cards: [
+      { es: "la comida", en: "food / meal", ex: "La comida está lista.\nThe food is ready." },
+      { es: "el agua", en: "water", ex: "Quiero un vaso de agua.\nI want a glass of water.", note: "feminine, but takes 'el' in the singular" },
+      { es: "el pan", en: "bread", ex: "El pan está caliente.\nThe bread is warm." },
+      { es: "la leche", en: "milk", ex: "Compro leche en el mercado.\nI buy milk at the market." },
+      { es: "el café", en: "coffee", ex: "Tomo café por la mañana.\nI drink coffee in the morning." },
+      { es: "el huevo", en: "egg", ex: "Como dos huevos al día.\nI eat two eggs a day." },
+      { es: "la carne", en: "meat", ex: "No como carne.\nI don't eat meat." },
+      { es: "el pollo", en: "chicken", ex: "El pollo está delicioso.\nThe chicken is delicious." },
+      { es: "el pescado", en: "fish (as food)", ex: "El pescado está muy fresco.\nThe fish is very fresh.", note: "live fish: el pez" },
+      { es: "la fruta", en: "fruit", ex: "Como fruta todos los días.\nI eat fruit every day." },
+      { es: "la manzana", en: "apple", ex: "La manzana es verde.\nThe apple is green." },
+      { es: "la verdura", en: "vegetable", ex: "Las verduras son buenas para la salud.\nVegetables are good for your health." },
+      { es: "el arroz", en: "rice", ex: "El arroz con pollo es mi favorito.\nRice with chicken is my favorite." },
+      { es: "el queso", en: "cheese", ex: "Me gusta el queso español.\nI like Spanish cheese." },
+      { es: "el vino", en: "wine", ex: "Una copa de vino tinto, por favor.\nA glass of red wine, please." },
+      { es: "la cerveza", en: "beer", ex: "La cerveza está fría.\nThe beer is cold." },
+      { es: "el desayuno", en: "breakfast", ex: "El desayuno es a las ocho.\nBreakfast is at eight." },
+      { es: "el almuerzo", en: "lunch", ex: "¿Qué hay para el almuerzo?\nWhat's for lunch?", note: "in Spain often: la comida" },
+      { es: "la cena", en: "dinner", ex: "La cena está en la mesa.\nDinner is on the table." },
+      { es: "la cuenta", en: "bill / check", ex: "La cuenta, por favor.\nThe check, please." }
+    ]
+  },
+  {
+    name: "Body & Health",
+    cards: [
+      { es: "la cabeza", en: "head", ex: "Me duele la cabeza.\nMy head hurts." },
+      { es: "el ojo", en: "eye", ex: "Tiene los ojos azules.\nHe/she has blue eyes." },
+      { es: "la mano", en: "hand", ex: "Levanta la mano.\nRaise your hand.", note: "feminine despite ending in -o" },
+      { es: "el pie", en: "foot", ex: "Voy al trabajo a pie.\nI go to work on foot." },
+      { es: "la boca", en: "mouth", ex: "Abre la boca.\nOpen your mouth." },
+      { es: "el diente", en: "tooth", ex: "El niño tiene un diente nuevo.\nThe child has a new tooth." },
+      { es: "la nariz", en: "nose", ex: "Tengo la nariz fría.\nMy nose is cold." },
+      { es: "la oreja", en: "ear", ex: "El conejo tiene orejas largas.\nThe rabbit has long ears." },
+      { es: "el brazo", en: "arm", ex: "Me rompí el brazo.\nI broke my arm." },
+      { es: "la pierna", en: "leg", ex: "Tiene las piernas largas.\nHe/she has long legs." },
+      { es: "el corazón", en: "heart", ex: "Mi corazón late rápido.\nMy heart beats fast." },
+      { es: "la espalda", en: "back", ex: "Me duele la espalda.\nMy back hurts." },
+      { es: "el pelo", en: "hair", ex: "Ella tiene el pelo largo.\nShe has long hair.", note: "also: el cabello" },
+      { es: "la cara", en: "face", ex: "Lávate la cara.\nWash your face." },
+      { es: "el cuerpo", en: "body", ex: "El ejercicio es bueno para el cuerpo.\nExercise is good for the body." },
+      { es: "la sangre", en: "blood", ex: "El médico analiza la sangre.\nThe doctor tests the blood." },
+      { es: "el dolor", en: "pain / ache", ex: "Tengo dolor de estómago.\nI have a stomachache." },
+      { es: "la salud", en: "health", ex: "Fumar es malo para la salud.\nSmoking is bad for your health.", note: "¡salud! = cheers! / bless you!" },
+      { es: "la enfermedad", en: "illness / disease", ex: "Es una enfermedad común.\nIt's a common illness." },
+      { es: "la medicina", en: "medicine", ex: "Toma la medicina con agua.\nTake the medicine with water." }
+    ]
+  },
+  {
+    name: "City, Travel & Places",
+    cards: [
+      { es: "la ciudad", en: "city", ex: "Madrid es una ciudad grande.\nMadrid is a big city." },
+      { es: "el pueblo", en: "town / village", ex: "Mi abuelo vive en un pueblo pequeño.\nMy grandfather lives in a small village.", note: "also: a people / nation" },
+      { es: "la calle", en: "street", ex: "Vivo en esta calle.\nI live on this street." },
+      { es: "el camino", en: "road / way / path", ex: "Este camino va a la playa.\nThis road goes to the beach." },
+      { es: "la tienda", en: "store / shop", ex: "La tienda abre a las diez.\nThe store opens at ten." },
+      { es: "el mercado", en: "market", ex: "Compro fruta en el mercado.\nI buy fruit at the market." },
+      { es: "la escuela", en: "school", ex: "Los niños van a la escuela.\nThe children go to school." },
+      { es: "la iglesia", en: "church", ex: "La iglesia es muy antigua.\nThe church is very old." },
+      { es: "el hospital", en: "hospital", ex: "El hospital está cerca.\nThe hospital is nearby." },
+      { es: "el banco", en: "bank", ex: "El banco cierra a las dos.\nThe bank closes at two.", note: "also: bench" },
+      { es: "la playa", en: "beach", ex: "Vamos a la playa el domingo.\nWe're going to the beach on Sunday." },
+      { es: "el aeropuerto", en: "airport", ex: "El taxi va al aeropuerto.\nThe taxi goes to the airport." },
+      { es: "el tren", en: "train", ex: "El tren sale a las nueve.\nThe train leaves at nine." },
+      { es: "el avión", en: "airplane", ex: "El avión llega tarde.\nThe plane arrives late." },
+      { es: "el autobús", en: "bus", ex: "Tomo el autobús cada día.\nI take the bus every day.", note: "LatAm also: el camión / la guagua / el colectivo" },
+      { es: "el hotel", en: "hotel", ex: "El hotel tiene piscina.\nThe hotel has a pool." },
+      { es: "el viaje", en: "trip / journey", ex: "El viaje dura tres horas.\nThe trip takes three hours.", note: "¡buen viaje! = have a good trip!" },
+      { es: "el lugar", en: "place", ex: "Este lugar es muy bonito.\nThis place is very pretty." },
+      { es: "el país", en: "country", ex: "España es un país hermoso.\nSpain is a beautiful country." },
+      { es: "el mundo", en: "world", ex: "Quiero viajar por el mundo.\nI want to travel the world." }
+    ]
+  },
+  {
+    name: "Time & Nature",
+    cards: [
+      { es: "el tiempo", en: "time / weather", ex: "No tengo tiempo hoy.\nI don't have time today.", note: "¿qué tiempo hace? = what's the weather like?" },
+      { es: "el día", en: "day", ex: "Hoy es un buen día.\nToday is a good day.", note: "masculine despite ending in -a" },
+      { es: "la noche", en: "night", ex: "Trabajo por la noche.\nI work at night." },
+      { es: "la mañana", en: "morning", ex: "Corro por la mañana.\nI run in the morning.", note: "mañana (adverb) = tomorrow" },
+      { es: "la tarde", en: "afternoon / evening", ex: "Nos vemos por la tarde.\nSee you in the afternoon." },
+      { es: "la hora", en: "hour / time", ex: "¿A qué hora empieza?\nWhat time does it start?" },
+      { es: "la semana", en: "week", ex: "Te veo la próxima semana.\nI'll see you next week.", note: "el fin de semana = weekend" },
+      { es: "el mes", en: "month", ex: "El mes que viene voy a España.\nNext month I'm going to Spain." },
+      { es: "el año", en: "year", ex: "Este año estudio español.\nThis year I'm studying Spanish." },
+      { es: "la vez", en: "time / occasion", ex: "Es mi primera vez aquí.\nIt's my first time here.", note: "otra vez = again; a veces = sometimes" },
+      { es: "el momento", en: "moment", ex: "Un momento, por favor.\nOne moment, please." },
+      { es: "el sol", en: "sun", ex: "Hoy hace mucho sol.\nIt's very sunny today." },
+      { es: "la luna", en: "moon", ex: "La luna está llena esta noche.\nThe moon is full tonight." },
+      { es: "la lluvia", en: "rain", ex: "No me gusta la lluvia.\nI don't like the rain.", note: "llueve = it's raining" },
+      { es: "el fuego", en: "fire", ex: "El fuego está caliente.\nThe fire is hot." },
+      { es: "el aire", en: "air", ex: "El aire de la montaña es limpio.\nThe mountain air is clean." },
+      { es: "la tierra", en: "earth / land / soil", ex: "Los agricultores trabajan la tierra.\nThe farmers work the land." },
+      { es: "el mar", en: "sea", ex: "El mar está tranquilo hoy.\nThe sea is calm today." },
+      { es: "el río", en: "river", ex: "El río pasa por la ciudad.\nThe river runs through the city." },
+      { es: "el árbol", en: "tree", ex: "Hay un árbol en el jardín.\nThere is a tree in the garden." }
+    ]
+  },
+  {
+    name: "Work, Money & School",
+    cards: [
+      { es: "el trabajo", en: "work / job", ex: "Voy al trabajo en tren.\nI go to work by train." },
+      { es: "el dinero", en: "money", ex: "No tengo dinero.\nI don't have money." },
+      { es: "el precio", en: "price", ex: "El precio es muy alto.\nThe price is very high." },
+      { es: "la empresa", en: "company / business", ex: "Trabajo en una empresa pequeña.\nI work at a small company." },
+      { es: "la oficina", en: "office", ex: "La oficina abre a las nueve.\nThe office opens at nine." },
+      { es: "la reunión", en: "meeting", ex: "Tengo una reunión a las tres.\nI have a meeting at three." },
+      { es: "el proyecto", en: "project", ex: "El proyecto termina en mayo.\nThe project ends in May." },
+      { es: "la pregunta", en: "question", ex: "Tengo una pregunta.\nI have a question." },
+      { es: "la respuesta", en: "answer", ex: "No sé la respuesta.\nI don't know the answer." },
+      { es: "la palabra", en: "word", ex: "¿Qué significa esta palabra?\nWhat does this word mean?" },
+      { es: "la idea", en: "idea", ex: "¡Es una buena idea!\nIt's a good idea!" },
+      { es: "el problema", en: "problem", ex: "No hay problema.\nNo problem.", note: "masculine despite ending in -a" },
+      { es: "el ejemplo", en: "example", ex: "Dame un ejemplo, por favor.\nGive me an example, please.", note: "por ejemplo = for example" },
+      { es: "la ayuda", en: "help", ex: "Gracias por tu ayuda.\nThanks for your help." },
+      { es: "la clase", en: "class / lesson", ex: "La clase de español es hoy.\nSpanish class is today." },
+      { es: "el / la estudiante", en: "student", ex: "Los estudiantes leen mucho.\nThe students read a lot." },
+      { es: "el maestro / la maestra", en: "teacher", ex: "La maestra explica la lección.\nThe teacher explains the lesson.", note: "also: el profesor / la profesora" },
+      { es: "la carta", en: "letter", ex: "Escribo una carta a mi abuela.\nI'm writing a letter to my grandmother.", note: "in a restaurant: the menu" },
+      { es: "el mensaje", en: "message", ex: "Te mando un mensaje luego.\nI'll send you a message later." },
+      { es: "la noticia", en: "news (a piece of)", ex: "Tengo una buena noticia.\nI have good news.", note: "the news: las noticias" }
+    ]
+  },
+  {
+    name: "Life & Abstract Essentials",
+    cards: [
+      { es: "la vida", en: "life", ex: "La vida es bella.\nLife is beautiful." },
+      { es: "la muerte", en: "death", ex: "No le tiene miedo a la muerte.\nHe/she is not afraid of death." },
+      { es: "el amor", en: "love", ex: "El amor es importante.\nLove is important." },
+      { es: "la verdad", en: "truth", ex: "Siempre digo la verdad.\nI always tell the truth.", note: "¿verdad? = right? / isn't it?" },
+      { es: "la mentira", en: "lie", ex: "Eso es una mentira.\nThat is a lie." },
+      { es: "la parte", en: "part", ex: "Esta es mi parte favorita.\nThis is my favorite part." },
+      { es: "la forma", en: "shape / form / way", ex: "Hay otra forma de hacerlo.\nThere is another way to do it." },
+      { es: "la manera", en: "way / manner", ex: "Me gusta su manera de hablar.\nI like his/her way of speaking.", note: "de todas maneras = anyway" },
+      { es: "el caso", en: "case", ex: "En ese caso, vamos mañana.\nIn that case, let's go tomorrow.", note: "en todo caso = in any case" },
+      { es: "la razón", en: "reason", ex: "Tienes razón.\nYou're right." },
+      { es: "el miedo", en: "fear", ex: "El niño tiene miedo del perro.\nThe boy is afraid of the dog.", note: "tengo miedo = I'm afraid" },
+      { es: "la suerte", en: "luck", ex: "¡Buena suerte con el examen!\nGood luck with the exam!" },
+      { es: "el sueño", en: "dream / sleep", ex: "Tengo sueño; me voy a la cama.\nI'm sleepy; I'm going to bed." },
+      { es: "la historia", en: "history / story", ex: "Mi abuelo cuenta historias divertidas.\nMy grandfather tells funny stories." },
+      { es: "el juego", en: "game", ex: "Es solo un juego.\nIt's just a game." },
+      { es: "la fiesta", en: "party", ex: "La fiesta es el sábado.\nThe party is on Saturday." },
+      { es: "la música", en: "music", ex: "Escucho música cada día.\nI listen to music every day." },
+      { es: "la canción", en: "song", ex: "Esta canción es muy bonita.\nThis song is very pretty." },
+      { es: "el cambio", en: "change", ex: "¿Tienes cambio para el autobús?\nDo you have change for the bus?", note: "also: small change (money)" },
+      { es: "el fin", en: "end", ex: "Por fin es viernes.\nFinally, it's Friday.", note: "el fin de semana = weekend" }
+    ]
+  },
+  {
+    name: "Expressions: Greetings & Courtesy",
+    cards: [
+      { es: "hola", en: "hello", ex: "¡Hola! ¿Cómo estás?\nHi! How are you?" },
+      { es: "buenos días", en: "good morning", ex: "Buenos días, señora García.\nGood morning, Mrs. García." },
+      { es: "buenas tardes", en: "good afternoon", ex: "Buenas tardes, ¿cómo está?\nGood afternoon, how are you?" },
+      { es: "buenas noches", en: "good evening / good night", ex: "Buenas noches, hasta mañana.\nGood night, see you tomorrow." },
+      { es: "¿cómo estás?", en: "how are you?", ex: "Hola, Juan, ¿cómo estás?\nHi Juan, how are you?", note: "formal: ¿cómo está usted?" },
+      { es: "¿qué tal?", en: "how's it going?", ex: "¿Qué tal el trabajo?\nHow's work going?" },
+      { es: "muy bien, gracias", en: "very well, thanks", ex: "—¿Cómo estás? —Muy bien, gracias.\nHow are you? — Very well, thanks." },
+      { es: "mucho gusto", en: "nice to meet you", ex: "—Soy Ana. —Mucho gusto, Ana.\nI'm Ana. — Nice to meet you, Ana.", note: "also: encantado / encantada" },
+      { es: "por favor", en: "please", ex: "Un café, por favor.\nA coffee, please." },
+      { es: "muchas gracias", en: "thank you very much", ex: "Muchas gracias por el regalo.\nThank you very much for the gift." },
+      { es: "de nada", en: "you're welcome", ex: "—¡Gracias! —De nada.\nThanks! — You're welcome." },
+      { es: "lo siento", en: "I'm sorry", ex: "Lo siento, llego tarde.\nI'm sorry, I'm late." },
+      { es: "perdón / disculpe", en: "excuse me / sorry", ex: "Perdón, ¿qué hora es?\nExcuse me, what time is it?" },
+      { es: "con permiso", en: "excuse me (passing by)", ex: "Con permiso, necesito pasar.\nExcuse me, I need to get through." },
+      { es: "adiós", en: "goodbye", ex: "Adiós, nos vemos el lunes.\nGoodbye, see you Monday." },
+      { es: "hasta luego", en: "see you later", ex: "Me voy, ¡hasta luego!\nI'm leaving, see you later!" },
+      { es: "hasta mañana", en: "see you tomorrow", ex: "Hasta mañana, que descanses.\nSee you tomorrow, rest well." },
+      { es: "nos vemos", en: "see you", ex: "Nos vemos en el café a las cinco.\nSee you at the café at five.", note: "literally: we'll see each other" },
+      { es: "bienvenido / bienvenida", en: "welcome", ex: "¡Bienvenidos a nuestra casa!\nWelcome to our home!" },
+      { es: "¡salud!", en: "cheers! / bless you!", ex: "—¡Achís! —¡Salud!\nAchoo! — Bless you!" }
+    ]
+  },
+  {
+    name: "Expressions: Getting By",
+    cards: [
+      { es: "¿cuánto cuesta?", en: "how much does it cost?", ex: "¿Cuánto cuesta este libro?\nHow much does this book cost?" },
+      { es: "¿dónde está…?", en: "where is…?", ex: "¿Dónde está la estación de tren?\nWhere is the train station?" },
+      { es: "¿qué hora es?", en: "what time is it?", ex: "Perdón, ¿qué hora es?\nExcuse me, what time is it?" },
+      { es: "no entiendo", en: "I don't understand", ex: "No entiendo la pregunta.\nI don't understand the question." },
+      { es: "no sé", en: "I don't know", ex: "No sé dónde está mi llave.\nI don't know where my key is." },
+      { es: "¿puedes repetir?", en: "can you repeat?", ex: "¿Puedes repetir más despacio?\nCan you repeat more slowly?", note: "formal: ¿puede repetir?" },
+      { es: "más despacio, por favor", en: "slower, please", ex: "Habla más despacio, por favor.\nSpeak more slowly, please." },
+      { es: "¿hablas inglés?", en: "do you speak English?", ex: "Perdón, ¿hablas inglés?\nExcuse me, do you speak English?", note: "formal: ¿habla inglés?" },
+      { es: "me llamo…", en: "my name is…", ex: "Me llamo Carlos, ¿y tú?\nMy name is Carlos, and you?", note: "literally: I call myself…" },
+      { es: "soy de…", en: "I'm from…", ex: "Soy de Brasil, ¿y usted?\nI'm from Brazil, and you?" },
+      { es: "tengo hambre", en: "I'm hungry", ex: "Tengo hambre, ¿comemos algo?\nI'm hungry, shall we eat something?", note: "literally: I have hunger" },
+      { es: "tengo sed", en: "I'm thirsty", ex: "Tengo sed, quiero agua.\nI'm thirsty, I want water.", note: "literally: I have thirst" },
+      { es: "tengo frío / calor", en: "I'm cold / hot", ex: "Cierra la ventana, tengo frío.\nClose the window, I'm cold." },
+      { es: "me gusta", en: "I like it", ex: "Me gusta mucho esta ciudad.\nI really like this city.", note: "literally: it pleases me" },
+      { es: "no me gusta", en: "I don't like it", ex: "No me gusta el café frío.\nI don't like cold coffee." },
+      { es: "está bien", en: "it's okay / alright", ex: "—¿Vamos mañana? —Está bien.\nShall we go tomorrow? — Okay." },
+      { es: "claro que sí", en: "of course", ex: "—¿Me ayudas? —¡Claro que sí!\nWill you help me? — Of course!" },
+      { es: "no importa", en: "it doesn't matter", ex: "No importa, podemos ir mañana.\nIt doesn't matter, we can go tomorrow." },
+      { es: "¡qué bueno!", en: "how nice! / great!", ex: "¡Qué bueno verte otra vez!\nHow nice to see you again!" },
+      { es: "un momento, por favor", en: "one moment, please", ex: "Un momento, por favor, ya voy.\nOne moment, please, I'm coming." }
+    ]
+  }
+];
+
+// --- State ---
+const STORAGE_KEY = "spanish-flashcards-known-v2";
+let known = loadKnown();
+let deckFilter = "all";      // "all" or deck index as string
+let direction = "es-en";     // or "en-es"
+let skipKnown = false;
+let pool = [];               // [{ id, es, en, note, ex }]
+let order = [];              // indices into pool
+let pos = 0;
+let flipped = false;
+
+function loadKnown() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+  } catch { return new Set(); }
+}
+function saveKnown() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...known])); } catch {}
+}
+
+function allCards() {
+  const out = [];
+  DECKS.forEach((deck, di) => {
+    deck.cards.forEach((c, ci) => out.push({ id: di + "-" + ci, deck: di, ...c }));
+  });
+  return out;
+}
+
+function deckCards() {
+  const cards = allCards();
+  return deckFilter === "all" ? cards : cards.filter(c => c.deck === Number(deckFilter));
+}
+
+function rebuildPool(shuffle) {
+  const cards = deckCards();
+  pool = skipKnown ? cards.filter(c => !known.has(c.id)) : cards;
+  order = pool.map((_, i) => i);
+  if (shuffle) {
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+  }
+  pos = 0;
+  flipped = false;
+  render();
+}
+
+// --- DOM ---
+const el = id => document.getElementById(id);
+const cardEl = el("card");
+
+function currentCard() {
+  return pool.length ? pool[order[pos]] : null;
+}
+
+function render() {
+  const card = currentCard();
+  const empty = !card;
+
+  cardEl.style.display = empty ? "none" : "";
+  el("done-state").style.display = empty ? "flex" : "none";
+  el("nav-row").style.display = empty ? "none" : "";
+  el("answer-row").style.display = empty ? "none" : "";
+
+  if (!empty) {
+    const frontIsSpanish = direction === "es-en";
+    el("front-lang").textContent = frontIsSpanish ? "Español" : "English";
+    el("back-lang").textContent = frontIsSpanish ? "English" : "Español";
+    el("front-word").textContent = frontIsSpanish ? card.es : card.en;
+    el("back-word").textContent = frontIsSpanish ? card.en : card.es;
+    el("back-example").textContent = card.ex || "";
+    el("back-note").textContent = card.note || "";
+    cardEl.classList.toggle("flipped", flipped);
+    cardEl.classList.toggle("known", known.has(card.id));
+    el("card-counter").textContent = (pos + 1) + " / " + order.length;
+  }
+
+  const cards = deckCards();
+  const knownCount = cards.filter(c => known.has(c.id)).length;
+  el("progress-text").textContent = knownCount + " / " + cards.length + " known";
+  el("progress-fill").style.width = cards.length ? (100 * knownCount / cards.length) + "%" : "0%";
+}
+
+function flip() {
+  if (!currentCard()) return;
+  flipped = !flipped;
+  cardEl.classList.toggle("flipped", flipped);
+}
+
+function move(delta) {
+  if (!order.length) return;
+  pos = (pos + delta + order.length) % order.length;
+  flipped = false;
+  render();
+}
+
+function markAgain() {
+  const card = currentCard();
+  if (!card) return;
+  if (known.has(card.id)) {
+    known.delete(card.id);
+    saveKnown();
+  }
+  move(1);
+}
+
+function markGotIt() {
+  const card = currentCard();
+  if (!card) return;
+  known.add(card.id);
+  saveKnown();
+  if (skipKnown) {
+    // Remove from rotation and stay at same position (which is now the next card).
+    const removed = order[pos];
+    order.splice(pos, 1);
+    order = order.map(i => (i > removed ? i - 1 : i));
+    pool.splice(removed, 1);
+    if (pos >= order.length) pos = 0;
+    flipped = false;
+    render();
+  } else {
+    move(1);
+  }
+}
+
+// --- Wiring ---
+const deckSelect = el("deck-select");
+deckSelect.innerHTML =
+  '<option value="all">All decks (' + allCards().length + " cards)</option>" +
+  DECKS.map((d, i) => '<option value="' + i + '">' + d.name + " (" + d.cards.length + ")</option>").join("");
+
+deckSelect.addEventListener("change", () => { deckFilter = deckSelect.value; rebuildPool(true); });
+el("direction-btn").addEventListener("click", () => {
+  direction = direction === "es-en" ? "en-es" : "es-en";
+  el("direction-btn").textContent = direction === "es-en" ? "ES → EN" : "EN → ES";
+  flipped = false;
+  render();
+});
+el("shuffle-btn").addEventListener("click", () => rebuildPool(true));
+el("skip-known").addEventListener("change", e => { skipKnown = e.target.checked; rebuildPool(true); });
+el("reset-btn").addEventListener("click", () => {
+  known = new Set();
+  saveKnown();
+  rebuildPool(true);
+});
+cardEl.addEventListener("click", flip);
+el("prev-btn").addEventListener("click", () => move(-1));
+el("next-btn").addEventListener("click", () => move(1));
+el("again-btn").addEventListener("click", markAgain);
+el("got-it-btn").addEventListener("click", markGotIt);
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  switch (e.key) {
+    case " ": case "Enter": e.preventDefault(); flip(); break;
+    case "ArrowRight": move(1); break;
+    case "ArrowLeft": move(-1); break;
+    case "1": markAgain(); break;
+    case "2": markGotIt(); break;
+    case "s": case "S": rebuildPool(true); break;
+  }
+});
+
+rebuildPool(true);
+</script>
+
+</body>
+</html>

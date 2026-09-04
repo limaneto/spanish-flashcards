@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Spanish Flashcards</title>
+<title>Flashcards de Espanhol</title>
 <style>
   :root {
     --bg: #faf7f2;
@@ -257,36 +257,36 @@
 <body>
 
 <header>
-  <h1><span class="flag">🇪🇸</span> Spanish Flashcards</h1>
-  <p class="subtitle">The 200 most useful Spanish nouns &amp; expressions. Click a card to flip — progress is saved in your browser.</p>
+  <h1><span class="flag">🇪🇸</span> Flashcards de Espanhol</h1>
+  <p class="subtitle">200 palavras e expressões que enganam quem fala português — sem cognatos. Clique no cartão para virar; o progresso fica salvo no navegador.</p>
 </header>
 
 <div class="controls">
-  <select id="deck-select" aria-label="Choose deck"></select>
-  <button class="pill-btn" id="direction-btn" title="Swap question/answer language">ES → EN</button>
-  <button class="pill-btn" id="shuffle-btn" title="Shuffle deck (S)">🔀 Shuffle</button>
-  <label class="toggle"><input type="checkbox" id="skip-known" /> Skip known</label>
+  <select id="deck-select" aria-label="Escolher baralho"></select>
+  <button class="pill-btn" id="direction-btn" title="Inverter idioma da pergunta/resposta">ES → PT</button>
+  <button class="pill-btn" id="shuffle-btn" title="Embaralhar (S)">🔀 Embaralhar</button>
+  <label class="toggle"><input type="checkbox" id="skip-known" /> Pular aprendidos</label>
 </div>
 
 <div class="progress-wrap">
   <div class="progress-label">
-    <span id="progress-text">0 / 0 known</span>
-    <button class="pill-btn" id="reset-btn" style="font-size:0.75rem; padding:4px 10px;">Reset progress</button>
+    <span id="progress-text">0 / 0 aprendidos</span>
+    <button class="pill-btn" id="reset-btn" style="font-size:0.75rem; padding:4px 10px;">Zerar progresso</button>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 </div>
 
 <main>
-  <div class="card-scene" id="card" tabindex="0" role="button" aria-label="Flashcard, press space to flip">
+  <div class="card-scene" id="card" tabindex="0" role="button" aria-label="Cartão; aperte espaço para virar">
     <div class="card-inner">
       <div class="card-face card-front">
         <span class="card-lang" id="front-lang">Español</span>
-        <span class="card-known-badge">✓ known</span>
+        <span class="card-known-badge">✓ aprendido</span>
         <div class="card-word" id="front-word"></div>
-        <div class="card-hint">click or press space to flip</div>
+        <div class="card-hint">clique ou aperte espaço para virar</div>
       </div>
       <div class="card-face card-back">
-        <span class="card-lang" id="back-lang">English</span>
+        <span class="card-lang" id="back-lang">Português</span>
         <div class="card-word" id="back-word"></div>
         <div class="card-example" id="back-example"></div>
         <div class="card-note" id="back-note"></div>
@@ -297,286 +297,286 @@
   <div class="done-state" id="done-state">
     <div class="emoji">🎉</div>
     <h2>¡Felicidades!</h2>
-    <p>You know every card in this deck.<br/>Pick another deck, or reset progress to review again.</p>
+    <p>Você aprendeu todos os cartões deste baralho.<br/>Escolha outro baralho ou zere o progresso para revisar.</p>
   </div>
 
   <div class="nav-row" id="nav-row">
-    <button class="nav-btn" id="prev-btn" title="Previous (←)">←</button>
+    <button class="nav-btn" id="prev-btn" title="Anterior (←)">←</button>
     <span class="card-counter" id="card-counter"></span>
-    <button class="nav-btn" id="next-btn" title="Next (→)">→</button>
+    <button class="nav-btn" id="next-btn" title="Próximo (→)">→</button>
   </div>
 
   <div class="answer-row" id="answer-row">
-    <button class="answer-btn again" id="again-btn">Again <kbd>1</kbd></button>
-    <button class="answer-btn got-it" id="got-it-btn">Got it <kbd>2</kbd></button>
+    <button class="answer-btn again" id="again-btn">De novo <kbd>1</kbd></button>
+    <button class="answer-btn got-it" id="got-it-btn">Acertei <kbd>2</kbd></button>
   </div>
 </main>
 
 <footer>
-  Shortcuts: <kbd>space</kbd> flip · <kbd>←</kbd><kbd>→</kbd> navigate · <kbd>1</kbd> again · <kbd>2</kbd> got it · <kbd>S</kbd> shuffle
+  Atalhos: <kbd>espaço</kbd> virar · <kbd>←</kbd><kbd>→</kbd> navegar · <kbd>1</kbd> de novo · <kbd>2</kbd> acertei · <kbd>S</kbd> embaralhar
 </footer>
 
 <script>
 const DECKS = [
   {
-    name: "People & Family",
+    name: "Falsos amigos I",
     cards: [
-      { es: "el hombre", en: "man", ex: "Ese hombre es muy alto.\nThat man is very tall." },
-      { es: "la mujer", en: "woman", ex: "La mujer lee un libro.\nThe woman is reading a book." },
-      { es: "el niño / la niña", en: "boy / girl", ex: "El niño juega en el parque.\nThe boy plays in the park." },
-      { es: "el amigo / la amiga", en: "friend", ex: "Mi amigo vive en Madrid.\nMy friend lives in Madrid." },
-      { es: "la familia", en: "family", ex: "Mi familia es muy grande.\nMy family is very big." },
-      { es: "la madre", en: "mother", ex: "Mi madre cocina muy bien.\nMy mother cooks very well.", note: "informal: mamá" },
-      { es: "el padre", en: "father", ex: "Mi padre trabaja hoy.\nMy father is working today.", note: "informal: papá; los padres = parents" },
-      { es: "el hijo / la hija", en: "son / daughter", ex: "Su hija tiene cinco años.\nHer daughter is five years old." },
-      { es: "el hermano / la hermana", en: "brother / sister", ex: "Tengo dos hermanos.\nI have two brothers." },
-      { es: "el abuelo / la abuela", en: "grandfather / grandmother", ex: "Mi abuela hace un pastel.\nMy grandmother is making a cake." },
-      { es: "el esposo / la esposa", en: "husband / wife", ex: "Su esposo se llama Juan.\nHer husband's name is Juan.", note: "also: el marido" },
-      { es: "la gente", en: "people", ex: "Hay mucha gente en la calle.\nThere are a lot of people in the street.", note: "singular in Spanish: la gente es…" },
-      { es: "la persona", en: "person", ex: "Es una persona muy amable.\nHe/she is a very kind person." },
-      { es: "el señor", en: "sir / Mr.", ex: "El señor García está aquí.\nMr. García is here." },
-      { es: "la señora", en: "madam / Mrs.", ex: "La señora espera el tren.\nThe lady is waiting for the train." },
-      { es: "el nombre", en: "name", ex: "¿Cuál es tu nombre?\nWhat is your name?" },
-      { es: "el vecino / la vecina", en: "neighbor", ex: "Mi vecino tiene un perro.\nMy neighbor has a dog." },
-      { es: "el jefe / la jefa", en: "boss", ex: "El jefe llega a las nueve.\nThe boss arrives at nine." },
-      { es: "el médico / la médica", en: "doctor", ex: "El médico trabaja en el hospital.\nThe doctor works at the hospital." },
-      { es: "el bebé", en: "baby", ex: "El bebé duerme ahora.\nThe baby is sleeping now." }
+      { es: "el apellido", pt: "sobrenome", ex: "¿Cuál es tu apellido?\nQual é o seu sobrenome?", note: "apelido (PT) = el apodo" },
+      { es: "la oficina", pt: "escritório", ex: "Trabajo en una oficina.\nTrabalho em um escritório.", note: "oficina mecânica = el taller" },
+      { es: "el escritorio", pt: "escrivaninha", ex: "El ordenador está en el escritorio.\nO computador está na escrivaninha.", note: "escritório = la oficina" },
+      { es: "embarazada", pt: "grávida", ex: "Mi hermana está embarazada.\nMinha irmã está grávida.", note: "envergonhada = avergonzada" },
+      { es: "exquisito / exquisita", pt: "delicioso / deliciosa", ex: "¡La cena está exquisita!\nO jantar está delicioso!", note: "esquisito (PT) = raro, extraño" },
+      { es: "la cena", pt: "jantar", ex: "La cena es a las nueve.\nO jantar é às nove.", note: "cena de filme = la escena; jantar (verbo) = cenar" },
+      { es: "el polvo", pt: "pó / poeira", ex: "Hay mucho polvo en los muebles.\nTem muita poeira nos móveis.", note: "polvo (animal) = el pulpo" },
+      { es: "borracho / borracha", pt: "bêbado / bêbada", ex: "Está borracho después de la fiesta.\nEle está bêbado depois da festa.", note: "borracha de apagar = la goma" },
+      { es: "el vaso", pt: "copo", ex: "Un vaso de agua, por favor.\nUm copo de água, por favor.", note: "vaso de flores = el florero; vaso sanitário = el inodoro" },
+      { es: "la taza", pt: "xícara", ex: "Una taza de café, por favor.\nUma xícara de café, por favor." },
+      { es: "la copa", pt: "taça", ex: "Una copa de vino tinto.\nUma taça de vinho tinto." },
+      { es: "largo / larga", pt: "comprido / longo", ex: "El viaje es muy largo.\nA viagem é muito comprida.", note: "largo (PT) = ancho" },
+      { es: "ancho / ancha", pt: "largo / larga", ex: "La avenida es muy ancha.\nA avenida é muito larga." },
+      { es: "el rato", pt: "um momento / tempinho", ex: "Espera un rato, por favor.\nEspera um pouquinho, por favor.", note: "rato (animal) = el ratón" },
+      { es: "la fecha", pt: "data", ex: "¿Cuál es la fecha de hoy?\nQual é a data de hoje?", note: "fechar = cerrar" },
+      { es: "todavía", pt: "ainda", ex: "Todavía no he comido.\nAinda não comi.", note: "todavia (PT: porém) = sin embargo" },
+      { es: "pronto", pt: "logo / em breve", ex: "Nos vemos pronto.\nA gente se vê em breve.", note: "pronto (PT: preparado) = listo" },
+      { es: "apenas", pt: "mal / quase não", ex: "Apenas puedo oírte.\nMal consigo te ouvir.", note: "apenas (PT: somente) = solo / solamente" },
+      { es: "la salsa", pt: "molho", ex: "Pasta con salsa de tomate.\nMacarrão com molho de tomate.", note: "salsa (PT: tempero) = el perejil" },
+      { es: "el taller", pt: "oficina (mecânica)", ex: "El coche está en el taller.\nO carro está na oficina." }
     ]
   },
   {
-    name: "Home & Everyday Objects",
+    name: "Falsos amigos II",
     cards: [
-      { es: "la casa", en: "house / home", ex: "Mi casa está cerca del mar.\nMy house is near the sea.", note: "en casa = at home" },
-      { es: "la puerta", en: "door", ex: "La puerta está abierta.\nThe door is open." },
-      { es: "la ventana", en: "window", ex: "Abre la ventana, por favor.\nOpen the window, please." },
-      { es: "la mesa", en: "table", ex: "El libro está en la mesa.\nThe book is on the table." },
-      { es: "la silla", en: "chair", ex: "Esta silla es muy cómoda.\nThis chair is very comfortable." },
-      { es: "la cama", en: "bed", ex: "Voy a la cama temprano.\nI go to bed early." },
-      { es: "la cocina", en: "kitchen", ex: "Mi madre está en la cocina.\nMy mother is in the kitchen." },
-      { es: "el baño", en: "bathroom", ex: "¿Dónde está el baño?\nWhere is the bathroom?" },
-      { es: "la habitación", en: "room / bedroom", ex: "La habitación tiene dos camas.\nThe room has two beds.", note: "also: el cuarto" },
-      { es: "la llave", en: "key", ex: "No encuentro mis llaves.\nI can't find my keys." },
-      { es: "la luz", en: "light", ex: "Apaga la luz, por favor.\nTurn off the light, please." },
-      { es: "el teléfono", en: "phone", ex: "Mi teléfono no funciona.\nMy phone doesn't work.", note: "cell phone: el móvil (Spain) / el celular (LatAm)" },
-      { es: "la ropa", en: "clothes", ex: "Necesito lavar la ropa.\nI need to wash the clothes." },
-      { es: "el zapato", en: "shoe", ex: "Estos zapatos son nuevos.\nThese shoes are new." },
-      { es: "la cosa", en: "thing", ex: "Tengo muchas cosas que hacer.\nI have many things to do." },
-      { es: "el libro", en: "book", ex: "Este libro es muy interesante.\nThis book is very interesting." },
-      { es: "el papel", en: "paper", ex: "Escribe tu nombre en el papel.\nWrite your name on the paper." },
-      { es: "la bolsa", en: "bag", ex: "La bolsa está llena de fruta.\nThe bag is full of fruit." },
-      { es: "el coche", en: "car", ex: "El coche es rojo.\nThe car is red.", note: "LatAm: el carro / el auto" },
-      { es: "el regalo", en: "gift / present", ex: "Este regalo es para ti.\nThis gift is for you." }
+      { es: "el saco", pt: "paletó / blazer", ex: "Hace frío, ponte el saco.\nEstá frio, veste o paletó.", note: "Espanha: la chaqueta; saco plástico = la bolsa" },
+      { es: "el bolso", pt: "bolsa (feminina)", ex: "Mi cartera está en el bolso.\nMinha carteira está na bolsa." },
+      { es: "el bolsillo", pt: "bolso", ex: "Las llaves están en mi bolsillo.\nAs chaves estão no meu bolso." },
+      { es: "la muñeca", pt: "pulso (do braço)", ex: "Me duele la muñeca.\nMeu pulso dói.", note: "também: boneca (brinquedo)" },
+      { es: "la cadera", pt: "quadril", ex: "Le duele la cadera.\nO quadril dele dói.", note: "cadeira = la silla" },
+      { es: "el cuello", pt: "pescoço", ex: "Me duele el cuello.\nMeu pescoço dói.", note: "também: gola; coelho = el conejo" },
+      { es: "el conejo", pt: "coelho", ex: "El conejo come zanahorias.\nO coelho come cenouras." },
+      { es: "la grasa", pt: "gordura", ex: "Esta comida tiene mucha grasa.\nEsta comida tem muita gordura.", note: "graça = la gracia" },
+      { es: "el suceso", pt: "acontecimento", ex: "Fue un suceso muy extraño.\nFoi um acontecimento muito estranho.", note: "sucesso = el éxito" },
+      { es: "el éxito", pt: "sucesso", ex: "La película fue un éxito.\nO filme foi um sucesso." },
+      { es: "la salida", pt: "saída", ex: "¿Dónde está la salida?\nOnde fica a saída?" },
+      { es: "raro / rara", pt: "estranho / esquisito", ex: "Qué raro, la puerta está abierta.\nQue estranho, a porta está aberta.", note: "também: raro (pouco comum)" },
+      { es: "el jugo", pt: "suco", ex: "Un jugo de naranja, por favor.\nUm suco de laranja, por favor.", note: "Espanha: el zumo" },
+      { es: "el postre", pt: "sobremesa", ex: "¿Qué hay de postre?\nO que tem de sobremesa?" },
+      { es: "la sobremesa", pt: "conversa após a refeição", ex: "La sobremesa duró dos horas.\nA conversa depois do almoço durou duas horas.", note: "sobremesa (doce) = el postre" },
+      { es: "la propina", pt: "gorjeta", ex: "Dejamos propina al mesero.\nDeixamos gorjeta para o garçom.", note: "propina (PT: suborno) = el soborno" },
+      { es: "la firma", pt: "assinatura", ex: "Necesito tu firma aquí.\nPreciso da sua assinatura aqui.", note: "firma (empresa) = la empresa" },
+      { es: "el sitio", pt: "lugar", ex: "Este sitio es muy bonito.\nEste lugar é muito bonito.", note: "sítio (chácara) = la granja / la finca" },
+      { es: "la granja", pt: "sítio / fazenda", ex: "Mis abuelos viven en una granja.\nMeus avós moram em um sítio." },
+      { es: "el niño", pt: "menino / criança", ex: "El niño juega en el parque.\nO menino brinca no parque.", note: "ninho = el nido" }
     ]
   },
   {
-    name: "Food & Drink",
+    name: "Casa & objetos",
     cards: [
-      { es: "la comida", en: "food / meal", ex: "La comida está lista.\nThe food is ready." },
-      { es: "el agua", en: "water", ex: "Quiero un vaso de agua.\nI want a glass of water.", note: "feminine, but takes 'el' in the singular" },
-      { es: "el pan", en: "bread", ex: "El pan está caliente.\nThe bread is warm." },
-      { es: "la leche", en: "milk", ex: "Compro leche en el mercado.\nI buy milk at the market." },
-      { es: "el café", en: "coffee", ex: "Tomo café por la mañana.\nI drink coffee in the morning." },
-      { es: "el huevo", en: "egg", ex: "Como dos huevos al día.\nI eat two eggs a day." },
-      { es: "la carne", en: "meat", ex: "No como carne.\nI don't eat meat." },
-      { es: "el pollo", en: "chicken", ex: "El pollo está delicioso.\nThe chicken is delicious." },
-      { es: "el pescado", en: "fish (as food)", ex: "El pescado está muy fresco.\nThe fish is very fresh.", note: "live fish: el pez" },
-      { es: "la fruta", en: "fruit", ex: "Como fruta todos los días.\nI eat fruit every day." },
-      { es: "la manzana", en: "apple", ex: "La manzana es verde.\nThe apple is green." },
-      { es: "la verdura", en: "vegetable", ex: "Las verduras son buenas para la salud.\nVegetables are good for your health." },
-      { es: "el arroz", en: "rice", ex: "El arroz con pollo es mi favorito.\nRice with chicken is my favorite." },
-      { es: "el queso", en: "cheese", ex: "Me gusta el queso español.\nI like Spanish cheese." },
-      { es: "el vino", en: "wine", ex: "Una copa de vino tinto, por favor.\nA glass of red wine, please." },
-      { es: "la cerveza", en: "beer", ex: "La cerveza está fría.\nThe beer is cold." },
-      { es: "el desayuno", en: "breakfast", ex: "El desayuno es a las ocho.\nBreakfast is at eight." },
-      { es: "el almuerzo", en: "lunch", ex: "¿Qué hay para el almuerzo?\nWhat's for lunch?", note: "in Spain often: la comida" },
-      { es: "la cena", en: "dinner", ex: "La cena está en la mesa.\nDinner is on the table." },
-      { es: "la cuenta", en: "bill / check", ex: "La cuenta, por favor.\nThe check, please." }
+      { es: "la ventana", pt: "janela", ex: "Abre la ventana.\nAbre a janela." },
+      { es: "la silla", pt: "cadeira", ex: "Siéntate en la silla.\nSenta na cadeira.", note: "sela (de cavalo) = la silla de montar" },
+      { es: "el sillón", pt: "poltrona", ex: "Leo en el sillón.\nLeio na poltrona." },
+      { es: "la alfombra", pt: "tapete", ex: "El gato duerme en la alfombra.\nO gato dorme no tapete." },
+      { es: "la escoba", pt: "vassoura", ex: "¿Dónde está la escoba?\nOnde está a vassoura?" },
+      { es: "el tenedor", pt: "garfo", ex: "Falta un tenedor en la mesa.\nFalta um garfo na mesa." },
+      { es: "el cuchillo", pt: "faca", ex: "Este cuchillo no corta.\nEsta faca não corta." },
+      { es: "la cuchara", pt: "colher", ex: "Necesito una cuchara para la sopa.\nPreciso de uma colher para a sopa." },
+      { es: "la sartén", pt: "frigideira", ex: "Fríe el huevo en la sartén.\nFrita o ovo na frigideira." },
+      { es: "la olla", pt: "panela", ex: "El arroz está en la olla.\nO arroz está na panela." },
+      { es: "el cajón", pt: "gaveta", ex: "Los papeles están en el cajón.\nOs papéis estão na gaveta." },
+      { es: "la almohada", pt: "travesseiro", ex: "Esta almohada es muy blanda.\nEste travesseiro é muito macio." },
+      { es: "la manta", pt: "cobertor", ex: "Trae una manta, hace frío.\nTraz um cobertor, está frio.", note: "LatAm também: la cobija / la frazada" },
+      { es: "la basura", pt: "lixo", ex: "Saca la basura, por favor.\nLeva o lixo para fora, por favor." },
+      { es: "el enchufe", pt: "tomada", ex: "¿Hay un enchufe cerca?\nTem uma tomada perto?" },
+      { es: "el grifo", pt: "torneira", ex: "Cierra el grifo.\nFecha a torneira.", note: "LatAm: la llave / la canilla" },
+      { es: "las tijeras", pt: "tesoura", ex: "¿Me prestas las tijeras?\nMe empresta a tesoura?" },
+      { es: "el bolígrafo", pt: "caneta", ex: "Escribe con bolígrafo azul.\nEscreve com caneta azul.", note: "LatAm: la pluma / el lapicero" },
+      { es: "la goma", pt: "borracha (de apagar)", ex: "¿Tienes una goma?\nVocê tem uma borracha?", note: "também: elástico" },
+      { es: "el suelo", pt: "chão", ex: "El vaso cayó al suelo.\nO copo caiu no chão.", note: "piso (ES) = apartamento / andar" }
     ]
   },
   {
-    name: "Body & Health",
+    name: "Comida & bebida",
     cards: [
-      { es: "la cabeza", en: "head", ex: "Me duele la cabeza.\nMy head hurts." },
-      { es: "el ojo", en: "eye", ex: "Tiene los ojos azules.\nHe/she has blue eyes." },
-      { es: "la mano", en: "hand", ex: "Levanta la mano.\nRaise your hand.", note: "feminine despite ending in -o" },
-      { es: "el pie", en: "foot", ex: "Voy al trabajo a pie.\nI go to work on foot." },
-      { es: "la boca", en: "mouth", ex: "Abre la boca.\nOpen your mouth." },
-      { es: "el diente", en: "tooth", ex: "El niño tiene un diente nuevo.\nThe child has a new tooth." },
-      { es: "la nariz", en: "nose", ex: "Tengo la nariz fría.\nMy nose is cold." },
-      { es: "la oreja", en: "ear", ex: "El conejo tiene orejas largas.\nThe rabbit has long ears." },
-      { es: "el brazo", en: "arm", ex: "Me rompí el brazo.\nI broke my arm." },
-      { es: "la pierna", en: "leg", ex: "Tiene las piernas largas.\nHe/she has long legs." },
-      { es: "el corazón", en: "heart", ex: "Mi corazón late rápido.\nMy heart beats fast." },
-      { es: "la espalda", en: "back", ex: "Me duele la espalda.\nMy back hurts." },
-      { es: "el pelo", en: "hair", ex: "Ella tiene el pelo largo.\nShe has long hair.", note: "also: el cabello" },
-      { es: "la cara", en: "face", ex: "Lávate la cara.\nWash your face." },
-      { es: "el cuerpo", en: "body", ex: "El ejercicio es bueno para el cuerpo.\nExercise is good for the body." },
-      { es: "la sangre", en: "blood", ex: "El médico analiza la sangre.\nThe doctor tests the blood." },
-      { es: "el dolor", en: "pain / ache", ex: "Tengo dolor de estómago.\nI have a stomachache." },
-      { es: "la salud", en: "health", ex: "Fumar es malo para la salud.\nSmoking is bad for your health.", note: "¡salud! = cheers! / bless you!" },
-      { es: "la enfermedad", en: "illness / disease", ex: "Es una enfermedad común.\nIt's a common illness." },
-      { es: "la medicina", en: "medicine", ex: "Toma la medicina con agua.\nTake the medicine with water." }
+      { es: "el desayuno", pt: "café da manhã", ex: "El desayuno es a las ocho.\nO café da manhã é às oito.", note: "tomar café da manhã = desayunar" },
+      { es: "el pollo", pt: "frango", ex: "Pollo con arroz, por favor.\nFrango com arroz, por favor." },
+      { es: "el pavo", pt: "peru", ex: "Comemos pavo en Navidad.\nComemos peru no Natal." },
+      { es: "el jamón", pt: "presunto", ex: "Un bocadillo de jamón.\nUm sanduíche de presunto." },
+      { es: "la piña", pt: "abacaxi", ex: "El jugo de piña está rico.\nO suco de abacaxi está gostoso.", note: "Argentina: el ananá" },
+      { es: "la fresa", pt: "morango", ex: "Helado de fresa, por favor.\nSorvete de morango, por favor.", note: "Argentina/Chile: la frutilla" },
+      { es: "la zanahoria", pt: "cenoura", ex: "Compra zanahorias en el mercado.\nCompra cenouras no mercado." },
+      { es: "la sandía", pt: "melancia", ex: "La sandía está dulce.\nA melancia está doce." },
+      { es: "el melocotón", pt: "pêssego", ex: "Los melocotones están maduros.\nOs pêssegos estão maduros.", note: "LatAm: el durazno" },
+      { es: "las palomitas", pt: "pipoca", ex: "Compramos palomitas en el cine.\nCompramos pipoca no cinema." },
+      { es: "el helado", pt: "sorvete", ex: "Quiero un helado de chocolate.\nQuero um sorvete de chocolate." },
+      { es: "la galleta", pt: "biscoito / bolacha", ex: "El niño quiere una galleta.\nO menino quer um biscoito." },
+      { es: "el pastel", pt: "bolo", ex: "El pastel de cumpleaños está listo.\nO bolo de aniversário está pronto.", note: "LatAm também: la torta; pastel (PT) ≈ la empanada" },
+      { es: "el hielo", pt: "gelo", ex: "¿Con hielo o sin hielo?\nCom gelo ou sem gelo?" },
+      { es: "el aceite", pt: "óleo / azeite", ex: "Cocina con aceite de oliva.\nCozinha com azeite de oliva.", note: "não é 'aceite' de aceitar!" },
+      { es: "la merienda", pt: "lanche da tarde", ex: "Los niños toman la merienda a las cinco.\nAs crianças lancham às cinco." },
+      { es: "el refresco", pt: "refrigerante", ex: "¿Quieres un refresco?\nQuer um refrigerante?", note: "Argentina: la gaseosa" },
+      { es: "el aguacate", pt: "abacate", ex: "El aguacate está maduro.\nO abacate está maduro.", note: "Sul da América: la palta" },
+      { es: "los frijoles", pt: "feijão", ex: "Arroz con frijoles.\nArroz com feijão.", note: "Espanha: las judías / alubias" },
+      { es: "la lechuga", pt: "alface", ex: "Ensalada de lechuga y tomate.\nSalada de alface e tomate." }
     ]
   },
   {
-    name: "City, Travel & Places",
+    name: "Corpo & saúde",
     cards: [
-      { es: "la ciudad", en: "city", ex: "Madrid es una ciudad grande.\nMadrid is a big city." },
-      { es: "el pueblo", en: "town / village", ex: "Mi abuelo vive en un pueblo pequeño.\nMy grandfather lives in a small village.", note: "also: a people / nation" },
-      { es: "la calle", en: "street", ex: "Vivo en esta calle.\nI live on this street." },
-      { es: "el camino", en: "road / way / path", ex: "Este camino va a la playa.\nThis road goes to the beach." },
-      { es: "la tienda", en: "store / shop", ex: "La tienda abre a las diez.\nThe store opens at ten." },
-      { es: "el mercado", en: "market", ex: "Compro fruta en el mercado.\nI buy fruit at the market." },
-      { es: "la escuela", en: "school", ex: "Los niños van a la escuela.\nThe children go to school." },
-      { es: "la iglesia", en: "church", ex: "La iglesia es muy antigua.\nThe church is very old." },
-      { es: "el hospital", en: "hospital", ex: "El hospital está cerca.\nThe hospital is nearby." },
-      { es: "el banco", en: "bank", ex: "El banco cierra a las dos.\nThe bank closes at two.", note: "also: bench" },
-      { es: "la playa", en: "beach", ex: "Vamos a la playa el domingo.\nWe're going to the beach on Sunday." },
-      { es: "el aeropuerto", en: "airport", ex: "El taxi va al aeropuerto.\nThe taxi goes to the airport." },
-      { es: "el tren", en: "train", ex: "El tren sale a las nueve.\nThe train leaves at nine." },
-      { es: "el avión", en: "airplane", ex: "El avión llega tarde.\nThe plane arrives late." },
-      { es: "el autobús", en: "bus", ex: "Tomo el autobús cada día.\nI take the bus every day.", note: "LatAm also: el camión / la guagua / el colectivo" },
-      { es: "el hotel", en: "hotel", ex: "El hotel tiene piscina.\nThe hotel has a pool." },
-      { es: "el viaje", en: "trip / journey", ex: "El viaje dura tres horas.\nThe trip takes three hours.", note: "¡buen viaje! = have a good trip!" },
-      { es: "el lugar", en: "place", ex: "Este lugar es muy bonito.\nThis place is very pretty." },
-      { es: "el país", en: "country", ex: "España es un país hermoso.\nSpain is a beautiful country." },
-      { es: "el mundo", en: "world", ex: "Quiero viajar por el mundo.\nI want to travel the world." }
+      { es: "la rodilla", pt: "joelho", ex: "Me duele la rodilla.\nMeu joelho dói." },
+      { es: "el tobillo", pt: "tornozelo", ex: "Se torció el tobillo.\nEle torceu o tornozelo." },
+      { es: "el codo", pt: "cotovelo", ex: "Apoyó el codo en la mesa.\nApoiou o cotovelo na mesa." },
+      { es: "la mejilla", pt: "bochecha", ex: "El bebé tiene las mejillas rojas.\nO bebê está com as bochechas vermelhas." },
+      { es: "la ceja", pt: "sobrancelha", ex: "Tiene las cejas gruesas.\nEle tem as sobrancelhas grossas." },
+      { es: "las pestañas", pt: "cílios", ex: "Tiene pestañas muy largas.\nEla tem cílios bem longos." },
+      { es: "el hueso", pt: "osso", ex: "El perro tiene un hueso.\nO cachorro tem um osso." },
+      { es: "el hígado", pt: "fígado", ex: "El hígado procesa las toxinas.\nO fígado processa as toxinas.", note: "h- do espanhol vira f- em português" },
+      { es: "el riñón", pt: "rim", ex: "Tiene una piedra en el riñón.\nEle tem uma pedra no rim." },
+      { es: "el oído", pt: "ouvido", ex: "Me duele el oído.\nMeu ouvido dói.", note: "orelha (parte externa) = la oreja" },
+      { es: "la muela", pt: "dente (molar)", ex: "Tengo dolor de muelas.\nEstou com dor de dente.", note: "dente da frente = el diente" },
+      { es: "el talón", pt: "calcanhar", ex: "Las botas lastiman el talón.\nAs botas machucam o calcanhar." },
+      { es: "la herida", pt: "ferida / machucado", ex: "La herida está sanando.\nA ferida está sarando." },
+      { es: "la piel", pt: "pele", ex: "Tiene la piel muy clara.\nEla tem a pele bem clara." },
+      { es: "la espalda", pt: "costas", ex: "Me duele la espalda.\nMinhas costas doem.", note: "espada = la espada" },
+      { es: "el pecho", pt: "peito", ex: "El bebé duerme en el pecho de la madre.\nO bebê dorme no peito da mãe." },
+      { es: "el muslo", pt: "coxa", ex: "El futbolista se lesionó el muslo.\nO jogador machucou a coxa." },
+      { es: "mareado / mareada", pt: "tonto / enjoado", ex: "Estoy mareado, necesito sentarme.\nEstou tonto, preciso sentar.", note: "também: enjoado (no barco, no carro)" },
+      { es: "la pastilla", pt: "comprimido", ex: "Toma una pastilla para el dolor.\nToma um comprimido para a dor." },
+      { es: "el jarabe", pt: "xarope", ex: "El jarabe es para la tos.\nO xarope é para a tosse." }
     ]
   },
   {
-    name: "Time & Nature",
+    name: "Rua & cidade",
     cards: [
-      { es: "el tiempo", en: "time / weather", ex: "No tengo tiempo hoy.\nI don't have time today.", note: "¿qué tiempo hace? = what's the weather like?" },
-      { es: "el día", en: "day", ex: "Hoy es un buen día.\nToday is a good day.", note: "masculine despite ending in -a" },
-      { es: "la noche", en: "night", ex: "Trabajo por la noche.\nI work at night." },
-      { es: "la mañana", en: "morning", ex: "Corro por la mañana.\nI run in the morning.", note: "mañana (adverb) = tomorrow" },
-      { es: "la tarde", en: "afternoon / evening", ex: "Nos vemos por la tarde.\nSee you in the afternoon." },
-      { es: "la hora", en: "hour / time", ex: "¿A qué hora empieza?\nWhat time does it start?" },
-      { es: "la semana", en: "week", ex: "Te veo la próxima semana.\nI'll see you next week.", note: "el fin de semana = weekend" },
-      { es: "el mes", en: "month", ex: "El mes que viene voy a España.\nNext month I'm going to Spain." },
-      { es: "el año", en: "year", ex: "Este año estudio español.\nThis year I'm studying Spanish." },
-      { es: "la vez", en: "time / occasion", ex: "Es mi primera vez aquí.\nIt's my first time here.", note: "otra vez = again; a veces = sometimes" },
-      { es: "el momento", en: "moment", ex: "Un momento, por favor.\nOne moment, please." },
-      { es: "el sol", en: "sun", ex: "Hoy hace mucho sol.\nIt's very sunny today." },
-      { es: "la luna", en: "moon", ex: "La luna está llena esta noche.\nThe moon is full tonight." },
-      { es: "la lluvia", en: "rain", ex: "No me gusta la lluvia.\nI don't like the rain.", note: "llueve = it's raining" },
-      { es: "el fuego", en: "fire", ex: "El fuego está caliente.\nThe fire is hot." },
-      { es: "el aire", en: "air", ex: "El aire de la montaña es limpio.\nThe mountain air is clean." },
-      { es: "la tierra", en: "earth / land / soil", ex: "Los agricultores trabajan la tierra.\nThe farmers work the land." },
-      { es: "el mar", en: "sea", ex: "El mar está tranquilo hoy.\nThe sea is calm today." },
-      { es: "el río", en: "river", ex: "El río pasa por la ciudad.\nThe river runs through the city." },
-      { es: "el árbol", en: "tree", ex: "Hay un árbol en el jardín.\nThere is a tree in the garden." }
+      { es: "la calle", pt: "rua", ex: "Vivo en esta calle.\nMoro nesta rua." },
+      { es: "la acera", pt: "calçada", ex: "Camina por la acera.\nAnda pela calçada.", note: "LatAm: la banqueta (Méx.) / la vereda" },
+      { es: "la cuadra", pt: "quarteirão", ex: "El banco queda a dos cuadras.\nO banco fica a dois quarteirões.", note: "usado na América Latina; Espanha: la manzana" },
+      { es: "la carretera", pt: "estrada / rodovia", ex: "La carretera está en obras.\nA estrada está em obras." },
+      { es: "el atasco", pt: "engarrafamento", ex: "Hay un atasco enorme.\nTem um engarrafamento enorme.", note: "LatAm: el tráfico / el embotellamiento" },
+      { es: "el coche", pt: "carro", ex: "Vamos en coche.\nVamos de carro.", note: "LatAm: el carro / el auto" },
+      { es: "el conductor", pt: "motorista", ex: "El conductor paró en el semáforo.\nO motorista parou no semáforo." },
+      { es: "el carné de conducir", pt: "carteira de motorista", ex: "Olvidé mi carné de conducir.\nEsqueci minha carteira de motorista.", note: "LatAm: la licencia de conducir" },
+      { es: "la parada", pt: "ponto (de ônibus)", ex: "Bajo en la próxima parada.\nDesço no próximo ponto." },
+      { es: "el peatón", pt: "pedestre", ex: "El peatón cruza la calle.\nO pedestre atravessa a rua." },
+      { es: "el ayuntamiento", pt: "prefeitura", ex: "El ayuntamiento queda en el centro.\nA prefeitura fica no centro.", note: "LatAm: la alcaldía / la municipalidad" },
+      { es: "el alcalde / la alcaldesa", pt: "prefeito / prefeita", ex: "El alcalde visitó el barrio.\nO prefeito visitou o bairro." },
+      { es: "el buzón", pt: "caixa de correio", ex: "Deja la carta en el buzón.\nDeixa a carta na caixa de correio." },
+      { es: "la peluquería", pt: "cabeleireiro (salão)", ex: "Voy a la peluquería el sábado.\nVou ao cabeleireiro no sábado." },
+      { es: "el escaparate", pt: "vitrine", ex: "Vi el vestido en el escaparate.\nVi o vestido na vitrine.", note: "LatAm: la vitrina" },
+      { es: "la tienda", pt: "loja", ex: "La tienda cierra a las ocho.\nA loja fecha às oito." },
+      { es: "el rascacielos", pt: "arranha-céu", ex: "Hay muchos rascacielos en la ciudad.\nTem muitos arranha-céus na cidade." },
+      { es: "el pueblo", pt: "cidadezinha / povoado", ex: "Mis padres viven en un pueblo.\nMeus pais moram numa cidadezinha.", note: "também: povo" },
+      { es: "el alquiler", pt: "aluguel", ex: "El alquiler es muy caro.\nO aluguel é muito caro.", note: "México: la renta" },
+      { es: "el piso", pt: "apartamento (Espanha)", ex: "Vivo en un piso pequeño.\nMoro num apartamento pequeno.", note: "também: andar; chão = el suelo" }
     ]
   },
   {
-    name: "Work, Money & School",
+    name: "Verbos que enganam",
     cards: [
-      { es: "el trabajo", en: "work / job", ex: "Voy al trabajo en tren.\nI go to work by train." },
-      { es: "el dinero", en: "money", ex: "No tengo dinero.\nI don't have money." },
-      { es: "el precio", en: "price", ex: "El precio es muy alto.\nThe price is very high." },
-      { es: "la empresa", en: "company / business", ex: "Trabajo en una empresa pequeña.\nI work at a small company." },
-      { es: "la oficina", en: "office", ex: "La oficina abre a las nueve.\nThe office opens at nine." },
-      { es: "la reunión", en: "meeting", ex: "Tengo una reunión a las tres.\nI have a meeting at three." },
-      { es: "el proyecto", en: "project", ex: "El proyecto termina en mayo.\nThe project ends in May." },
-      { es: "la pregunta", en: "question", ex: "Tengo una pregunta.\nI have a question." },
-      { es: "la respuesta", en: "answer", ex: "No sé la respuesta.\nI don't know the answer." },
-      { es: "la palabra", en: "word", ex: "¿Qué significa esta palabra?\nWhat does this word mean?" },
-      { es: "la idea", en: "idea", ex: "¡Es una buena idea!\nIt's a good idea!" },
-      { es: "el problema", en: "problem", ex: "No hay problema.\nNo problem.", note: "masculine despite ending in -a" },
-      { es: "el ejemplo", en: "example", ex: "Dame un ejemplo, por favor.\nGive me an example, please.", note: "por ejemplo = for example" },
-      { es: "la ayuda", en: "help", ex: "Gracias por tu ayuda.\nThanks for your help." },
-      { es: "la clase", en: "class / lesson", ex: "La clase de español es hoy.\nSpanish class is today." },
-      { es: "el / la estudiante", en: "student", ex: "Los estudiantes leen mucho.\nThe students read a lot." },
-      { es: "el maestro / la maestra", en: "teacher", ex: "La maestra explica la lección.\nThe teacher explains the lesson.", note: "also: el profesor / la profesora" },
-      { es: "la carta", en: "letter", ex: "Escribo una carta a mi abuela.\nI'm writing a letter to my grandmother.", note: "in a restaurant: the menu" },
-      { es: "el mensaje", en: "message", ex: "Te mando un mensaje luego.\nI'll send you a message later." },
-      { es: "la noticia", en: "news (a piece of)", ex: "Tengo una buena noticia.\nI have good news.", note: "the news: las noticias" }
+      { es: "quedar", pt: "ficar", ex: "Me quedo en casa hoy.\nVou ficar em casa hoje.", note: "também: combinar (quedamos a las cinco)" },
+      { es: "olvidar", pt: "esquecer", ex: "Olvidé las llaves.\nEsqueci as chaves." },
+      { es: "cerrar", pt: "fechar", ex: "Cierra la puerta.\nFecha a porta." },
+      { es: "hablar", pt: "falar", ex: "¿Hablas español?\nVocê fala espanhol?" },
+      { es: "quitar", pt: "tirar (remover)", ex: "Quítate los zapatos.\nTira os sapatos." },
+      { es: "sacar", pt: "tirar (foto, dinheiro)", ex: "¿Puedes sacar una foto?\nPode tirar uma foto?" },
+      { es: "coger", pt: "pegar", ex: "Cojo el autobús a las ocho.\nPego o ônibus às oito.", note: "normal na Espanha; na América Latina evite — use tomar / agarrar" },
+      { es: "tirar", pt: "jogar fora / puxar", ex: "Tira la basura, por favor.\nJoga o lixo fora, por favor.", note: "tirar (PT) = sacar / quitar" },
+      { es: "pegar", pt: "colar / bater", ex: "El niño pegó el dibujo en la pared.\nO menino colou o desenho na parede.", note: "pegar (PT) = coger / agarrar / tomar" },
+      { es: "brincar", pt: "pular / saltar", ex: "Los niños brincan en la cama.\nAs crianças pulam na cama.", note: "brincar (PT) = jugar" },
+      { es: "jugar", pt: "brincar / jogar", ex: "Los niños juegan en el parque.\nAs crianças brincam no parque." },
+      { es: "borrar", pt: "apagar (texto)", ex: "Borra esa palabra.\nApaga essa palavra.", note: "borrar (PT: manchar) = manchar" },
+      { es: "acordarse", pt: "lembrar-se", ex: "No me acuerdo de tu nombre.\nNão lembro do seu nome.", note: "acordar (PT) = despertarse" },
+      { es: "despertarse", pt: "acordar", ex: "Me despierto a las siete.\nAcordo às sete." },
+      { es: "contestar", pt: "responder / atender", ex: "No contesta el teléfono.\nEle não atende o telefone.", note: "contestar (PT: discordar) = cuestionar" },
+      { es: "enseñar", pt: "ensinar / mostrar", ex: "Ella enseña español.\nEla ensina espanhol.", note: "te enseño la casa = te mostro a casa" },
+      { es: "extrañar", pt: "sentir saudade", ex: "Te extraño mucho.\nSinto muita saudade de você.", note: "Espanha: echar de menos; também: estranhar" },
+      { es: "charlar", pt: "bater papo", ex: "Charlamos toda la noche.\nBatemos papo a noite toda.", note: "México: platicar" },
+      { es: "alquilar", pt: "alugar", ex: "Quiero alquilar un coche.\nQuero alugar um carro.", note: "México: rentar" },
+      { es: "exprimir", pt: "espremer", ex: "Exprime el limón.\nEspreme o limão.", note: "exprimir (PT: expressar) = expresar" }
     ]
   },
   {
-    name: "Life & Abstract Essentials",
+    name: "Mais verbos",
     cards: [
-      { es: "la vida", en: "life", ex: "La vida es bella.\nLife is beautiful." },
-      { es: "la muerte", en: "death", ex: "No le tiene miedo a la muerte.\nHe/she is not afraid of death." },
-      { es: "el amor", en: "love", ex: "El amor es importante.\nLove is important." },
-      { es: "la verdad", en: "truth", ex: "Siempre digo la verdad.\nI always tell the truth.", note: "¿verdad? = right? / isn't it?" },
-      { es: "la mentira", en: "lie", ex: "Eso es una mentira.\nThat is a lie." },
-      { es: "la parte", en: "part", ex: "Esta es mi parte favorita.\nThis is my favorite part." },
-      { es: "la forma", en: "shape / form / way", ex: "Hay otra forma de hacerlo.\nThere is another way to do it." },
-      { es: "la manera", en: "way / manner", ex: "Me gusta su manera de hablar.\nI like his/her way of speaking.", note: "de todas maneras = anyway" },
-      { es: "el caso", en: "case", ex: "En ese caso, vamos mañana.\nIn that case, let's go tomorrow.", note: "en todo caso = in any case" },
-      { es: "la razón", en: "reason", ex: "Tienes razón.\nYou're right." },
-      { es: "el miedo", en: "fear", ex: "El niño tiene miedo del perro.\nThe boy is afraid of the dog.", note: "tengo miedo = I'm afraid" },
-      { es: "la suerte", en: "luck", ex: "¡Buena suerte con el examen!\nGood luck with the exam!" },
-      { es: "el sueño", en: "dream / sleep", ex: "Tengo sueño; me voy a la cama.\nI'm sleepy; I'm going to bed." },
-      { es: "la historia", en: "history / story", ex: "Mi abuelo cuenta historias divertidas.\nMy grandfather tells funny stories." },
-      { es: "el juego", en: "game", ex: "Es solo un juego.\nIt's just a game." },
-      { es: "la fiesta", en: "party", ex: "La fiesta es el sábado.\nThe party is on Saturday." },
-      { es: "la música", en: "music", ex: "Escucho música cada día.\nI listen to music every day." },
-      { es: "la canción", en: "song", ex: "Esta canción es muy bonita.\nThis song is very pretty." },
-      { es: "el cambio", en: "change", ex: "¿Tienes cambio para el autobús?\nDo you have change for the bus?", note: "also: small change (money)" },
-      { es: "el fin", en: "end", ex: "Por fin es viernes.\nFinally, it's Friday.", note: "el fin de semana = weekend" }
+      { es: "llegar", pt: "chegar", ex: "El tren llega a las nueve.\nO trem chega às nove.", note: "ll- do espanhol vira ch- em português" },
+      { es: "llamar", pt: "chamar / ligar", ex: "¿Cómo te llamas?\nComo você se chama?" },
+      { es: "llover", pt: "chover", ex: "Va a llover mañana.\nVai chover amanhã.", note: "la lluvia = a chuva" },
+      { es: "llorar", pt: "chorar", ex: "El bebé llora mucho.\nO bebê chora muito." },
+      { es: "llenar", pt: "encher", ex: "Llena el vaso de agua.\nEnche o copo de água.", note: "lleno = cheio" },
+      { es: "llevar", pt: "levar", ex: "Llevo a los niños a la escuela.\nLevo as crianças para a escola.", note: "também: vestir (lleva un saco)" },
+      { es: "oler", pt: "cheirar", ex: "La casa huele a café.\nA casa está com cheiro de café.", note: "el olor = o cheiro" },
+      { es: "echar", pt: "jogar / pôr", ex: "Echa sal a la sopa.\nPõe sal na sopa.", note: "echar de menos = sentir saudade" },
+      { es: "darse prisa", pt: "apressar-se", ex: "¡Date prisa, llegamos tarde!\nAnda logo, estamos atrasados!", note: "LatAm: apurarse" },
+      { es: "bajar", pt: "descer", ex: "Bajamos en la próxima parada.\nDescemos no próximo ponto.", note: "baixar arquivo = descargar" },
+      { es: "probar", pt: "experimentar / provar", ex: "¿Quieres probar el pastel?\nQuer experimentar o bolo?" },
+      { es: "encender", pt: "acender / ligar", ex: "Enciende la luz.\nAcende a luz.", note: "LatAm também: prender" },
+      { es: "lograr", pt: "conseguir", ex: "Logré terminar el proyecto.\nConsegui terminar o projeto.", note: "lograr (PT: enganar) = engañar" },
+      { es: "aprobar", pt: "passar (na prova)", ex: "Aprobé el examen.\nPassei na prova.", note: "reprovar = suspender (Es.) / reprobar (LatAm)" },
+      { es: "tardar", pt: "demorar", ex: "El autobús tarda mucho.\nO ônibus demora muito." },
+      { es: "empujar", pt: "empurrar", ex: "Empuja la puerta.\nEmpurra a porta.", note: "nas portas: EMPUJE = empurre" },
+      { es: "jalar", pt: "puxar", ex: "Jala la puerta.\nPuxa a porta.", note: "Espanha: tirar de; cuidado: JALE / TIRE = puxe!" },
+      { es: "romper", pt: "quebrar / rasgar", ex: "Se rompió el vaso.\nO copo quebrou.", note: "romper (PT: terminar namoro) = romper / cortar" },
+      { es: "arreglar", pt: "consertar / arrumar", ex: "Necesito arreglar el coche.\nPreciso consertar o carro." },
+      { es: "ahorrar", pt: "economizar / poupar", ex: "Quiero ahorrar dinero.\nQuero economizar dinheiro." }
     ]
   },
   {
-    name: "Expressions: Greetings & Courtesy",
+    name: "Conectores & palavrinhas",
     cards: [
-      { es: "hola", en: "hello", ex: "¡Hola! ¿Cómo estás?\nHi! How are you?" },
-      { es: "buenos días", en: "good morning", ex: "Buenos días, señora García.\nGood morning, Mrs. García." },
-      { es: "buenas tardes", en: "good afternoon", ex: "Buenas tardes, ¿cómo está?\nGood afternoon, how are you?" },
-      { es: "buenas noches", en: "good evening / good night", ex: "Buenas noches, hasta mañana.\nGood night, see you tomorrow." },
-      { es: "¿cómo estás?", en: "how are you?", ex: "Hola, Juan, ¿cómo estás?\nHi Juan, how are you?", note: "formal: ¿cómo está usted?" },
-      { es: "¿qué tal?", en: "how's it going?", ex: "¿Qué tal el trabajo?\nHow's work going?" },
-      { es: "muy bien, gracias", en: "very well, thanks", ex: "—¿Cómo estás? —Muy bien, gracias.\nHow are you? — Very well, thanks." },
-      { es: "mucho gusto", en: "nice to meet you", ex: "—Soy Ana. —Mucho gusto, Ana.\nI'm Ana. — Nice to meet you, Ana.", note: "also: encantado / encantada" },
-      { es: "por favor", en: "please", ex: "Un café, por favor.\nA coffee, please." },
-      { es: "muchas gracias", en: "thank you very much", ex: "Muchas gracias por el regalo.\nThank you very much for the gift." },
-      { es: "de nada", en: "you're welcome", ex: "—¡Gracias! —De nada.\nThanks! — You're welcome." },
-      { es: "lo siento", en: "I'm sorry", ex: "Lo siento, llego tarde.\nI'm sorry, I'm late." },
-      { es: "perdón / disculpe", en: "excuse me / sorry", ex: "Perdón, ¿qué hora es?\nExcuse me, what time is it?" },
-      { es: "con permiso", en: "excuse me (passing by)", ex: "Con permiso, necesito pasar.\nExcuse me, I need to get through." },
-      { es: "adiós", en: "goodbye", ex: "Adiós, nos vemos el lunes.\nGoodbye, see you Monday." },
-      { es: "hasta luego", en: "see you later", ex: "Me voy, ¡hasta luego!\nI'm leaving, see you later!" },
-      { es: "hasta mañana", en: "see you tomorrow", ex: "Hasta mañana, que descanses.\nSee you tomorrow, rest well." },
-      { es: "nos vemos", en: "see you", ex: "Nos vemos en el café a las cinco.\nSee you at the café at five.", note: "literally: we'll see each other" },
-      { es: "bienvenido / bienvenida", en: "welcome", ex: "¡Bienvenidos a nuestra casa!\nWelcome to our home!" },
-      { es: "¡salud!", en: "cheers! / bless you!", ex: "—¡Achís! —¡Salud!\nAchoo! — Bless you!" }
+      { es: "sin embargo", pt: "no entanto / porém", ex: "Es caro; sin embargo, lo compré.\nÉ caro; no entanto, comprei." },
+      { es: "aunque", pt: "embora / mesmo que", ex: "Voy aunque llueva.\nVou mesmo que chova." },
+      { es: "mientras", pt: "enquanto", ex: "Cocino mientras tú estudias.\nCozinho enquanto você estuda." },
+      { es: "quizás", pt: "talvez", ex: "Quizás llegue mañana.\nTalvez chegue amanhã.", note: "também: quizá / tal vez" },
+      { es: "a menudo", pt: "com frequência", ex: "Voy al cine a menudo.\nVou ao cinema com frequência." },
+      { es: "despacio", pt: "devagar", ex: "Habla más despacio.\nFala mais devagar." },
+      { es: "temprano", pt: "cedo", ex: "Me levanto temprano.\nLevanto cedo." },
+      { es: "luego", pt: "depois / logo", ex: "Luego te llamo.\nDepois te ligo.", note: "hasta luego = até logo" },
+      { es: "hasta", pt: "até", ex: "Trabajo hasta las seis.\nTrabalho até as seis." },
+      { es: "cerca", pt: "perto", ex: "El mercado está cerca.\nO mercado é perto.", note: "cerca (PT: muro baixo) = la cerca também existe!" },
+      { es: "lejos", pt: "longe", ex: "La playa queda lejos.\nA praia fica longe." },
+      { es: "adelante", pt: "em frente / adiante", ex: "Siga adelante, por favor.\nSiga em frente, por favor.", note: "¡adelante! = entre!" },
+      { es: "arriba", pt: "em cima / lá em cima", ex: "El baño está arriba.\nO banheiro fica lá em cima." },
+      { es: "abajo", pt: "embaixo", ex: "Te espero abajo.\nTe espero lá embaixo." },
+      { es: "afuera", pt: "lá fora", ex: "Los niños están afuera.\nAs crianças estão lá fora." },
+      { es: "anoche", pt: "ontem à noite", ex: "Anoche dormí mal.\nOntem à noite dormi mal." },
+      { es: "anteayer", pt: "anteontem", ex: "Llegué anteayer.\nCheguei anteontem." },
+      { es: "ojalá", pt: "tomara", ex: "¡Ojalá no llueva!\nTomara que não chova!" },
+      { es: "vale", pt: "tá bom / ok", ex: "—¿Nos vemos a las cinco? —Vale.\n— A gente se vê às cinco? — Tá bom.", note: "muito usado na Espanha" },
+      { es: "sino", pt: "mas sim", ex: "No es rojo, sino azul.\nNão é vermelho, mas sim azul." }
     ]
   },
   {
-    name: "Expressions: Getting By",
+    name: "Expressões do dia a dia",
     cards: [
-      { es: "¿cuánto cuesta?", en: "how much does it cost?", ex: "¿Cuánto cuesta este libro?\nHow much does this book cost?" },
-      { es: "¿dónde está…?", en: "where is…?", ex: "¿Dónde está la estación de tren?\nWhere is the train station?" },
-      { es: "¿qué hora es?", en: "what time is it?", ex: "Perdón, ¿qué hora es?\nExcuse me, what time is it?" },
-      { es: "no entiendo", en: "I don't understand", ex: "No entiendo la pregunta.\nI don't understand the question." },
-      { es: "no sé", en: "I don't know", ex: "No sé dónde está mi llave.\nI don't know where my key is." },
-      { es: "¿puedes repetir?", en: "can you repeat?", ex: "¿Puedes repetir más despacio?\nCan you repeat more slowly?", note: "formal: ¿puede repetir?" },
-      { es: "más despacio, por favor", en: "slower, please", ex: "Habla más despacio, por favor.\nSpeak more slowly, please." },
-      { es: "¿hablas inglés?", en: "do you speak English?", ex: "Perdón, ¿hablas inglés?\nExcuse me, do you speak English?", note: "formal: ¿habla inglés?" },
-      { es: "me llamo…", en: "my name is…", ex: "Me llamo Carlos, ¿y tú?\nMy name is Carlos, and you?", note: "literally: I call myself…" },
-      { es: "soy de…", en: "I'm from…", ex: "Soy de Brasil, ¿y usted?\nI'm from Brazil, and you?" },
-      { es: "tengo hambre", en: "I'm hungry", ex: "Tengo hambre, ¿comemos algo?\nI'm hungry, shall we eat something?", note: "literally: I have hunger" },
-      { es: "tengo sed", en: "I'm thirsty", ex: "Tengo sed, quiero agua.\nI'm thirsty, I want water.", note: "literally: I have thirst" },
-      { es: "tengo frío / calor", en: "I'm cold / hot", ex: "Cierra la ventana, tengo frío.\nClose the window, I'm cold." },
-      { es: "me gusta", en: "I like it", ex: "Me gusta mucho esta ciudad.\nI really like this city.", note: "literally: it pleases me" },
-      { es: "no me gusta", en: "I don't like it", ex: "No me gusta el café frío.\nI don't like cold coffee." },
-      { es: "está bien", en: "it's okay / alright", ex: "—¿Vamos mañana? —Está bien.\nShall we go tomorrow? — Okay." },
-      { es: "claro que sí", en: "of course", ex: "—¿Me ayudas? —¡Claro que sí!\nWill you help me? — Of course!" },
-      { es: "no importa", en: "it doesn't matter", ex: "No importa, podemos ir mañana.\nIt doesn't matter, we can go tomorrow." },
-      { es: "¡qué bueno!", en: "how nice! / great!", ex: "¡Qué bueno verte otra vez!\nHow nice to see you again!" },
-      { es: "un momento, por favor", en: "one moment, please", ex: "Un momento, por favor, ya voy.\nOne moment, please, I'm coming." }
+      { es: "¿qué tal?", pt: "e aí? / tudo bem?", ex: "¿Qué tal? ¿Todo bien?\nE aí? Tudo bem?" },
+      { es: "¡buen provecho!", pt: "bom apetite!", ex: "¡Buen provecho!\nBom apetite!" },
+      { es: "no pasa nada", pt: "não tem problema", ex: "Tranquilo, no pasa nada.\nRelaxa, não tem problema." },
+      { es: "¡ojo!", pt: "cuidado! / atenção!", ex: "¡Ojo con el escalón!\nCuidado com o degrau!" },
+      { es: "¡qué chévere!", pt: "que legal!", ex: "¡Qué chévere tu casa!\nQue legal a sua casa!", note: "Espanha: ¡qué guay!; México: ¡qué padre!" },
+      { es: "me da igual", pt: "tanto faz", ex: "—¿Café o té? —Me da igual.\n— Café ou chá? — Tanto faz." },
+      { es: "¡enhorabuena!", pt: "parabéns!", ex: "¡Enhorabuena por el trabajo nuevo!\nParabéns pelo emprego novo!", note: "LatAm: ¡felicidades!" },
+      { es: "echar de menos", pt: "sentir saudade", ex: "Echo de menos a mi familia.\nSinto saudade da minha família.", note: "LatAm: extrañar" },
+      { es: "tener ganas de", pt: "estar com vontade de", ex: "Tengo ganas de viajar.\nEstou com vontade de viajar." },
+      { es: "hacer cola", pt: "fazer fila", ex: "Hay que hacer cola.\nTem que fazer fila.", note: "fila = la cola / la fila" },
+      { es: "¡qué asco!", pt: "que nojo!", ex: "¡Qué asco esta comida!\nQue nojo esta comida!" },
+      { es: "estar de acuerdo", pt: "concordar", ex: "Estoy de acuerdo contigo.\nConcordo com você." },
+      { es: "hace falta", pt: "é preciso / está faltando", ex: "Hace falta más sal.\nEstá faltando mais sal." },
+      { es: "por supuesto", pt: "claro / com certeza", ex: "—¿Me ayudas? —¡Por supuesto!\n— Me ajuda? — Claro!" },
+      { es: "a lo mejor", pt: "quem sabe / talvez", ex: "A lo mejor voy mañana.\nQuem sabe eu vou amanhã." },
+      { es: "¡que te vaya bien!", pt: "que corra tudo bem!", ex: "¡Adiós, que te vaya bien!\nTchau, que corra tudo bem!" },
+      { es: "tener prisa", pt: "estar com pressa", ex: "No puedo hablar, tengo prisa.\nNão posso falar, estou com pressa.", note: "LatAm: estar apurado" },
+      { es: "tener sueño", pt: "estar com sono", ex: "Tengo sueño, me voy a dormir.\nEstou com sono, vou dormir." },
+      { es: "tener hambre", pt: "estar com fome", ex: "¿Tienes hambre?\nVocê está com fome?", note: "fome = el hambre" },
+      { es: "¡qué lío!", pt: "que confusão!", ex: "¡Qué lío este tráfico!\nQue confusão este trânsito!" }
     ]
   }
 ];
 
 // --- State ---
-const STORAGE_KEY = "spanish-flashcards-known-v2";
+const STORAGE_KEY = "spanish-flashcards-known-v3";
 let known = loadKnown();
 let deckFilter = "all";      // "all" or deck index as string
-let direction = "es-en";     // or "en-es"
+let direction = "es-pt";     // or "pt-es"
 let skipKnown = false;
-let pool = [];               // [{ id, es, en, note, ex }]
+let pool = [];               // [{ id, es, pt, note, ex }]
 let order = [];              // indices into pool
 let pos = 0;
 let flipped = false;
@@ -636,11 +636,11 @@ function render() {
   el("answer-row").style.display = empty ? "none" : "";
 
   if (!empty) {
-    const frontIsSpanish = direction === "es-en";
-    el("front-lang").textContent = frontIsSpanish ? "Español" : "English";
-    el("back-lang").textContent = frontIsSpanish ? "English" : "Español";
-    el("front-word").textContent = frontIsSpanish ? card.es : card.en;
-    el("back-word").textContent = frontIsSpanish ? card.en : card.es;
+    const frontIsSpanish = direction === "es-pt";
+    el("front-lang").textContent = frontIsSpanish ? "Español" : "Português";
+    el("back-lang").textContent = frontIsSpanish ? "Português" : "Español";
+    el("front-word").textContent = frontIsSpanish ? card.es : card.pt;
+    el("back-word").textContent = frontIsSpanish ? card.pt : card.es;
     el("back-example").textContent = card.ex || "";
     el("back-note").textContent = card.note || "";
     cardEl.classList.toggle("flipped", flipped);
@@ -650,7 +650,7 @@ function render() {
 
   const cards = deckCards();
   const knownCount = cards.filter(c => known.has(c.id)).length;
-  el("progress-text").textContent = knownCount + " / " + cards.length + " known";
+  el("progress-text").textContent = knownCount + " / " + cards.length + " aprendidos";
   el("progress-fill").style.width = cards.length ? (100 * knownCount / cards.length) + "%" : "0%";
 }
 
@@ -699,13 +699,13 @@ function markGotIt() {
 // --- Wiring ---
 const deckSelect = el("deck-select");
 deckSelect.innerHTML =
-  '<option value="all">All decks (' + allCards().length + " cards)</option>" +
+  '<option value="all">Todos os baralhos (' + allCards().length + " cartões)</option>" +
   DECKS.map((d, i) => '<option value="' + i + '">' + d.name + " (" + d.cards.length + ")</option>").join("");
 
 deckSelect.addEventListener("change", () => { deckFilter = deckSelect.value; rebuildPool(true); });
 el("direction-btn").addEventListener("click", () => {
-  direction = direction === "es-en" ? "en-es" : "es-en";
-  el("direction-btn").textContent = direction === "es-en" ? "ES → EN" : "EN → ES";
+  direction = direction === "es-pt" ? "pt-es" : "es-pt";
+  el("direction-btn").textContent = direction === "es-pt" ? "ES → PT" : "PT → ES";
   flipped = false;
   render();
 });

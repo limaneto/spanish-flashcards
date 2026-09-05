@@ -223,6 +223,34 @@
   .done-state .emoji { font-size: 3rem; }
   .done-state p { color: var(--text-muted); margin: 0; }
 
+  .link-btn {
+    font: inherit; font-size: 0.78rem;
+    background: none; border: none;
+    color: var(--text-muted); cursor: pointer;
+    padding: 4px 8px;
+  }
+  .link-btn:hover { color: var(--accent); }
+
+  dialog {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 24px;
+    width: min(92vw, 420px);
+    box-shadow: var(--shadow);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+  .form-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .field label { font-size: 0.78rem; color: var(--text-muted); }
+  .field input {
+    font: inherit; padding: 9px 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  }
+  .field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
   footer {
     padding: 16px 20px 28px;
     font-size: 0.78rem;
@@ -265,6 +293,7 @@
   <select id="deck-select" aria-label="Escolher baralho"></select>
   <button class="pill-btn" id="direction-btn" title="Inverter idioma da pergunta/resposta">ES → PT</button>
   <button class="pill-btn" id="shuffle-btn" title="Embaralhar (S)">🔀 Embaralhar</button>
+  <button class="pill-btn" id="add-btn" title="Adicionar palavra">＋ Adicionar</button>
   <label class="toggle"><input type="checkbox" id="skip-known" /> Pular aprendidos</label>
 </div>
 
@@ -295,9 +324,9 @@
   </div>
 
   <div class="done-state" id="done-state">
-    <div class="emoji">🎉</div>
-    <h2>¡Felicidades!</h2>
-    <p>Você aprendeu todos os cartões deste baralho.<br/>Escolha outro baralho ou zere o progresso para revisar.</p>
+    <div class="emoji" id="done-emoji">🎉</div>
+    <h2 id="done-title">¡Felicidades!</h2>
+    <p id="done-text">Você aprendeu todos os cartões deste baralho.<br/>Escolha outro baralho ou zere o progresso para revisar.</p>
   </div>
 
   <div class="nav-row" id="nav-row">
@@ -310,12 +339,45 @@
     <button class="answer-btn again" id="again-btn">De novo <kbd>1</kbd></button>
     <button class="answer-btn got-it" id="got-it-btn">Acertei <kbd>2</kbd></button>
   </div>
+
+  <button class="link-btn" id="delete-btn">🗑 Excluir este cartão</button>
 </main>
+
+<dialog id="add-dialog">
+  <form id="add-form">
+    <h2 class="form-title">Adicionar palavra</h2>
+    <div class="field">
+      <label for="f-es">Espanhol *</label>
+      <input id="f-es" required autocomplete="off" placeholder="la ventana" />
+    </div>
+    <div class="field">
+      <label for="f-pt">Português *</label>
+      <input id="f-pt" required autocomplete="off" placeholder="janela" />
+    </div>
+    <div class="field">
+      <label for="f-ex-es">Frase de exemplo em espanhol (opcional)</label>
+      <input id="f-ex-es" autocomplete="off" placeholder="Abre la ventana." />
+    </div>
+    <div class="field">
+      <label for="f-ex-pt">Tradução da frase (opcional)</label>
+      <input id="f-ex-pt" autocomplete="off" placeholder="Abre a janela." />
+    </div>
+    <div class="field">
+      <label for="f-note">Nota (opcional)</label>
+      <input id="f-note" autocomplete="off" placeholder="falso amigo, variação regional…" />
+    </div>
+    <div class="form-actions">
+      <button type="button" class="pill-btn" id="cancel-add-btn">Cancelar</button>
+      <button type="submit" class="answer-btn got-it">Salvar</button>
+    </div>
+  </form>
+</dialog>
 
 <footer>
   Atalhos: <kbd>espaço</kbd> virar · <kbd>←</kbd><kbd>→</kbd> navegar · <kbd>1</kbd> de novo · <kbd>2</kbd> acertei · <kbd>S</kbd> embaralhar
 </footer>
 
+<script src="backlog.js"></script>
 <script>
 const DECKS = [
   {
@@ -572,7 +634,14 @@ const DECKS = [
 
 // --- State ---
 const STORAGE_KEY = "spanish-flashcards-known-v3";
+const CUSTOM_KEY = "spanish-flashcards-custom-v1";
+const DELETED_KEY = "spanish-flashcards-deleted-v1";
+const CURSOR_KEY = "spanish-flashcards-backlog-cursor-v1";
+const ACTIVE_TARGET = 200;
 let known = loadKnown();
+let customCards = loadJson(CUSTOM_KEY, []);
+let deletedIds = new Set(loadJson(DELETED_KEY, []));
+let backlogCursor = Math.min(Number(localStorage.getItem(CURSOR_KEY)) || 0, BACKLOG.length);
 let deckFilter = "all";      // "all" or deck index as string
 let direction = "es-pt";     // or "pt-es"
 let skipKnown = false;
@@ -589,18 +658,49 @@ function loadKnown() {
 function saveKnown() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...known])); } catch {}
 }
+function loadJson(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function saveCustom() {
+  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customCards)); } catch {}
+}
+function saveDeleted() {
+  try { localStorage.setItem(DELETED_KEY, JSON.stringify([...deletedIds])); } catch {}
+}
 
 function allCards() {
   const out = [];
   DECKS.forEach((deck, di) => {
-    deck.cards.forEach((c, ci) => out.push({ id: di + "-" + ci, deck: di, ...c }));
+    deck.cards.forEach((c, ci) => {
+      const id = di + "-" + ci;
+      if (!deletedIds.has(id)) out.push({ id, deck: di, ...c });
+    });
   });
+  for (let i = 0; i < backlogCursor; i++) {
+    const id = "b-" + i;
+    if (!deletedIds.has(id)) out.push({ id, deck: "backlog", ...BACKLOG[i] });
+  }
+  customCards.forEach(c => out.push({ ...c, deck: "custom" }));
   return out;
 }
 
 function deckCards() {
   const cards = allCards();
-  return deckFilter === "all" ? cards : cards.filter(c => c.deck === Number(deckFilter));
+  if (deckFilter === "all") return cards;
+  if (deckFilter === "custom") return cards.filter(c => c.deck === "custom");
+  if (deckFilter === "backlog") return cards.filter(c => c.deck === "backlog");
+  return cards.filter(c => c.deck === Number(deckFilter));
+}
+
+// Keep the main space at ACTIVE_TARGET cards: each deletion pulls the next
+// card from BACKLOG ("Minhas palavras" doesn't count toward the target).
+function topUpFromBacklog() {
+  let active = allCards().filter(c => c.deck !== "custom").length;
+  while (active < ACTIVE_TARGET && backlogCursor < BACKLOG.length) {
+    backlogCursor++;
+    active++;
+  }
+  try { localStorage.setItem(CURSOR_KEY, String(backlogCursor)); } catch {}
 }
 
 function rebuildPool(shuffle) {
@@ -634,6 +734,17 @@ function render() {
   el("done-state").style.display = empty ? "flex" : "none";
   el("nav-row").style.display = empty ? "none" : "";
   el("answer-row").style.display = empty ? "none" : "";
+  el("delete-btn").style.display = empty ? "none" : "";
+
+  if (empty) {
+    const deckIsEmpty = deckCards().length === 0;
+    el("done-emoji").textContent = deckIsEmpty ? "🃏" : "🎉";
+    el("done-title").textContent = deckIsEmpty ? "Baralho vazio" : "¡Felicidades!";
+    el("done-text").innerHTML = deckIsEmpty
+      ? "Nenhum cartão aqui ainda.<br/>Adicione palavras com o botão ＋ Adicionar."
+      : "Você aprendeu todos os cartões deste baralho.<br/>Escolha outro baralho ou zere o progresso para revisar.";
+  }
+
 
   if (!empty) {
     const frontIsSpanish = direction === "es-pt";
@@ -677,30 +788,75 @@ function markAgain() {
   move(1);
 }
 
+// Remove the current card from rotation and stay at same position (which is now the next card).
+function removeCurrentFromRotation() {
+  const removed = order[pos];
+  order.splice(pos, 1);
+  order = order.map(i => (i > removed ? i - 1 : i));
+  pool.splice(removed, 1);
+  if (pos >= order.length) pos = 0;
+  flipped = false;
+}
+
 function markGotIt() {
   const card = currentCard();
   if (!card) return;
   known.add(card.id);
   saveKnown();
   if (skipKnown) {
-    // Remove from rotation and stay at same position (which is now the next card).
-    const removed = order[pos];
-    order.splice(pos, 1);
-    order = order.map(i => (i > removed ? i - 1 : i));
-    pool.splice(removed, 1);
-    if (pos >= order.length) pos = 0;
-    flipped = false;
+    removeCurrentFromRotation();
     render();
   } else {
     move(1);
   }
 }
 
+function deleteCurrent() {
+  const card = currentCard();
+  if (!card) return;
+  if (!confirm('Excluir o cartão "' + card.es + '"?')) return;
+  if (card.deck === "custom") {
+    customCards = customCards.filter(c => c.id !== card.id);
+    saveCustom();
+  } else {
+    deletedIds.add(card.id);
+    saveDeleted();
+    const before = backlogCursor;
+    topUpFromBacklog();
+    for (let i = before; i < backlogCursor; i++) {
+      if (deckFilter === "all" || deckFilter === "backlog") {
+        pool.push({ id: "b-" + i, deck: "backlog", ...BACKLOG[i] });
+        order.push(pool.length - 1);
+      }
+    }
+  }
+  known.delete(card.id);
+  saveKnown();
+  removeCurrentFromRotation();
+  refreshDeckOptions();
+  render();
+}
+
 // --- Wiring ---
 const deckSelect = el("deck-select");
-deckSelect.innerHTML =
-  '<option value="all">Todos os baralhos (' + allCards().length + " cartões)</option>" +
-  DECKS.map((d, i) => '<option value="' + i + '">' + d.name + " (" + d.cards.length + ")</option>").join("");
+const addDialog = el("add-dialog");
+
+function refreshDeckOptions() {
+  const prev = deckSelect.value;
+  deckSelect.innerHTML =
+    '<option value="all">Todos os baralhos (' + allCards().length + " cartões)</option>" +
+    DECKS.map((d, i) => {
+      const n = d.cards.filter((c, ci) => !deletedIds.has(i + "-" + ci)).length;
+      return '<option value="' + i + '">' + d.name + " (" + n + ")</option>";
+    }).join("") +
+    (backlogCursor > 0
+      ? '<option value="backlog">Novas palavras (' + allCards().filter(c => c.deck === "backlog").length + ")</option>"
+      : "") +
+    '<option value="custom">Minhas palavras (' + customCards.length + ")</option>";
+  deckSelect.value = [...deckSelect.options].some(o => o.value === prev) ? prev : "all";
+}
+topUpFromBacklog();
+refreshDeckOptions();
 
 deckSelect.addEventListener("change", () => { deckFilter = deckSelect.value; rebuildPool(true); });
 el("direction-btn").addEventListener("click", () => {
@@ -721,8 +877,37 @@ el("prev-btn").addEventListener("click", () => move(-1));
 el("next-btn").addEventListener("click", () => move(1));
 el("again-btn").addEventListener("click", markAgain);
 el("got-it-btn").addEventListener("click", markGotIt);
+el("delete-btn").addEventListener("click", deleteCurrent);
+
+el("add-btn").addEventListener("click", () => addDialog.showModal());
+el("cancel-add-btn").addEventListener("click", () => addDialog.close());
+el("add-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const es = el("f-es").value.trim();
+  const pt = el("f-pt").value.trim();
+  if (!es || !pt) return;
+  const exEs = el("f-ex-es").value.trim();
+  const exPt = el("f-ex-pt").value.trim();
+  const card = {
+    id: "c-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    es, pt,
+    ex: exEs ? exEs + (exPt ? "\n" + exPt : "") : "",
+    note: el("f-note").value.trim()
+  };
+  customCards.push(card);
+  saveCustom();
+  refreshDeckOptions();
+  if (deckFilter === "all" || deckFilter === "custom") {
+    pool.push({ ...card, deck: "custom" });
+    order.push(pool.length - 1);
+  }
+  render();
+  el("add-form").reset();
+  addDialog.close();
+});
 
 document.addEventListener("keydown", e => {
+  if (addDialog.open) return;
   if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
   switch (e.key) {
     case " ": case "Enter": e.preventDefault(); flip(); break;

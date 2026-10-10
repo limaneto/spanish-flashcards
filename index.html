@@ -54,6 +54,7 @@
   h1 { margin: 0 0 4px; font-size: clamp(1.25rem, 4vw, 1.5rem); letter-spacing: -0.01em; }
   h1 .flag { font-size: 1.2rem; }
   .subtitle { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+  .mode-switch { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
 
   .controls {
     width: 100%;
@@ -176,6 +177,9 @@
     line-height: 1.55;
   }
   .card-note { font-size: 0.8rem; color: var(--text-muted); opacity: 0.85; }
+  /* History cards carry sentences, not single words. */
+  .card-scene.history .card-word { font-size: clamp(1.1rem, 2.5vw + 0.6rem, 1.5rem); line-height: 1.35; }
+  .card-scene.history .card-example { font-style: normal; text-align: left; }
   .card-hint {
     position: absolute; bottom: 16px;
     font-size: 0.75rem; color: var(--text-muted);
@@ -244,11 +248,12 @@
   .form-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 14px; }
   .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
   .field label { font-size: 0.78rem; color: var(--text-muted); }
-  .field input {
+  .field input, .field textarea {
     font: inherit; padding: 9px 12px; border-radius: 10px;
     border: 1px solid var(--border); background: var(--bg); color: var(--text);
   }
-  .field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
   .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 
   footer {
@@ -285,8 +290,12 @@
 <body>
 
 <header>
-  <h1><span class="flag">🇪🇸</span> Flashcards de Espanhol</h1>
-  <p class="subtitle">200 palavras e expressões que enganam quem fala português — sem cognatos. Clique no cartão para virar; o progresso fica salvo no navegador.</p>
+  <div class="mode-switch">
+    <button class="pill-btn" data-mode="lang">🗣 Idiomas</button>
+    <button class="pill-btn" data-mode="history">📜 História</button>
+  </div>
+  <h1 id="title"><span class="flag">🇪🇸</span> Flashcards de Espanhol</h1>
+  <p class="subtitle" id="subtitle">200 palavras e expressões que enganam quem fala português — sem cognatos. Clique no cartão para virar; o progresso fica salvo no navegador.</p>
 </header>
 
 <div class="controls">
@@ -368,6 +377,37 @@
     </div>
     <div class="form-actions">
       <button type="button" class="pill-btn" id="cancel-add-btn">Cancelar</button>
+      <button type="submit" class="answer-btn got-it">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="history-dialog">
+  <form id="history-form">
+    <h2 class="form-title">Novo cartão de história</h2>
+    <div class="field">
+      <label for="h-q">Pergunta (frente) *</label>
+      <input id="h-q" required autocomplete="off" placeholder="Quem proclamou a independência do Brasil?" />
+    </div>
+    <div class="field">
+      <label for="h-a">Resposta (verso) *</label>
+      <input id="h-a" required autocomplete="off" placeholder="Dom Pedro I" />
+    </div>
+    <div class="field">
+      <label for="h-date">Data / período (opcional)</label>
+      <input id="h-date" autocomplete="off" placeholder="7 de setembro de 1822" />
+    </div>
+    <div class="field">
+      <label for="h-topic">Tema (opcional)</label>
+      <input id="h-topic" autocomplete="off" list="topic-list" placeholder="Brasil Império" />
+      <datalist id="topic-list"></datalist>
+    </div>
+    <div class="field">
+      <label for="h-details">Detalhes / contexto (opcional)</label>
+      <textarea id="h-details" placeholder="Às margens do riacho Ipiranga, em São Paulo…"></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="pill-btn" id="cancel-history-btn">Cancelar</button>
       <button type="submit" class="answer-btn got-it">Salvar</button>
     </div>
   </form>
@@ -638,11 +678,16 @@ const CUSTOM_KEY = "spanish-flashcards-custom-v1";
 const DELETED_KEY = "spanish-flashcards-deleted-v1";
 const CURSOR_KEY = "spanish-flashcards-backlog-cursor-v1";
 const ACTIVE_TARGET = 200;
+const MODE_KEY = "flashcards-mode-v1";
+const HISTORY_KEY = "history-flashcards-cards-v1";
+const HISTORY_KNOWN_KEY = "history-flashcards-known-v1";
+let mode = loadJson(MODE_KEY, "lang") === "history" ? "history" : "lang";
 let known = loadKnown();
+let historyCards = loadJson(HISTORY_KEY, []);   // [{ id, q, a, date, topic, details }]
 let customCards = loadJson(CUSTOM_KEY, []);
 let deletedIds = new Set(loadJson(DELETED_KEY, []));
 let backlogCursor = Math.min(Number(localStorage.getItem(CURSOR_KEY)) || 0, BACKLOG.length);
-let deckFilter = "all";      // "all" or deck index as string
+let deckFilter = "all";      // "all", deck index as string, or "t:<topic>" in history mode
 let direction = "es-pt";     // or "pt-es"
 let skipKnown = false;
 let pool = [];               // [{ id, es, pt, note, ex }]
@@ -650,13 +695,20 @@ let order = [];              // indices into pool
 let pos = 0;
 let flipped = false;
 
+// Each mode keeps its own progress, so "Zerar progresso" only resets the current one.
+function knownKey() {
+  return mode === "history" ? HISTORY_KNOWN_KEY : STORAGE_KEY;
+}
 function loadKnown() {
   try {
-    return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+    return new Set(JSON.parse(localStorage.getItem(knownKey()) || "[]"));
   } catch { return new Set(); }
 }
 function saveKnown() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...known])); } catch {}
+  try { localStorage.setItem(knownKey(), JSON.stringify([...known])); } catch {}
+}
+function saveHistory() {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(historyCards)); } catch {}
 }
 function loadJson(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -669,6 +721,11 @@ function saveDeleted() {
 }
 
 function allCards() {
+  if (mode === "history") return historyCards.map(c => ({ ...c, deck: "history" }));
+  return langCards();
+}
+
+function langCards() {
   const out = [];
   DECKS.forEach((deck, di) => {
     deck.cards.forEach((c, ci) => {
@@ -687,6 +744,7 @@ function allCards() {
 function deckCards() {
   const cards = allCards();
   if (deckFilter === "all") return cards;
+  if (mode === "history") return cards.filter(c => "t:" + (c.topic || "") === deckFilter);
   if (deckFilter === "custom") return cards.filter(c => c.deck === "custom");
   if (deckFilter === "backlog") return cards.filter(c => c.deck === "backlog");
   return cards.filter(c => c.deck === Number(deckFilter));
@@ -695,7 +753,7 @@ function deckCards() {
 // Keep the main space at ACTIVE_TARGET cards: each deletion pulls the next
 // card from BACKLOG ("Minhas palavras" doesn't count toward the target).
 function topUpFromBacklog() {
-  let active = allCards().filter(c => c.deck !== "custom").length;
+  let active = langCards().filter(c => c.deck !== "custom").length;
   while (active < ACTIVE_TARGET && backlogCursor < BACKLOG.length) {
     backlogCursor++;
     active++;
@@ -741,12 +799,21 @@ function render() {
     el("done-emoji").textContent = deckIsEmpty ? "🃏" : "🎉";
     el("done-title").textContent = deckIsEmpty ? "Baralho vazio" : "¡Felicidades!";
     el("done-text").innerHTML = deckIsEmpty
-      ? "Nenhum cartão aqui ainda.<br/>Adicione palavras com o botão ＋ Adicionar."
+      ? (mode === "history"
+          ? "Nenhum cartão de história ainda.<br/>Crie o primeiro com o botão ＋ Adicionar."
+          : "Nenhum cartão aqui ainda.<br/>Adicione palavras com o botão ＋ Adicionar.")
       : "Você aprendeu todos os cartões deste baralho.<br/>Escolha outro baralho ou zere o progresso para revisar.";
   }
 
-
-  if (!empty) {
+  cardEl.classList.toggle("history", mode === "history");
+  if (!empty && mode === "history") {
+    el("front-lang").textContent = card.topic || "História";
+    el("back-lang").textContent = "Resposta";
+    el("front-word").textContent = card.q;
+    el("back-word").textContent = card.a;
+    el("back-example").textContent = card.details || "";
+    el("back-note").textContent = card.date ? "📅 " + card.date : "";
+  } else if (!empty) {
     const frontIsSpanish = direction === "es-pt";
     el("front-lang").textContent = frontIsSpanish ? "Español" : "Português";
     el("back-lang").textContent = frontIsSpanish ? "Português" : "Español";
@@ -754,6 +821,8 @@ function render() {
     el("back-word").textContent = frontIsSpanish ? card.pt : card.es;
     el("back-example").textContent = card.ex || "";
     el("back-note").textContent = card.note || "";
+  }
+  if (!empty) {
     cardEl.classList.toggle("flipped", flipped);
     cardEl.classList.toggle("known", known.has(card.id));
     el("card-counter").textContent = (pos + 1) + " / " + order.length;
@@ -814,8 +883,11 @@ function markGotIt() {
 function deleteCurrent() {
   const card = currentCard();
   if (!card) return;
-  if (!confirm('Excluir o cartão "' + card.es + '"?')) return;
-  if (card.deck === "custom") {
+  if (!confirm('Excluir o cartão "' + (mode === "history" ? card.q : card.es) + '"?')) return;
+  if (mode === "history") {
+    historyCards = historyCards.filter(c => c.id !== card.id);
+    saveHistory();
+  } else if (card.deck === "custom") {
     customCards = customCards.filter(c => c.id !== card.id);
     saveCustom();
   } else {
@@ -840,9 +912,28 @@ function deleteCurrent() {
 // --- Wiring ---
 const deckSelect = el("deck-select");
 const addDialog = el("add-dialog");
+const historyDialog = el("history-dialog");
+
+function historyTopics() {
+  return [...new Set(historyCards.map(c => c.topic || ""))]
+    .sort((a, b) => (a === "") - (b === "") || a.localeCompare(b, "pt"));
+}
 
 function refreshDeckOptions() {
   const prev = deckSelect.value;
+  if (mode === "history") {
+    // Topics are user-typed, so build options via the DOM rather than innerHTML.
+    deckSelect.replaceChildren(
+      new Option("Todos os temas (" + historyCards.length + " cartões)", "all"),
+      ...historyTopics().map(t => new Option(
+        (t || "Sem tema") + " (" + historyCards.filter(c => (c.topic || "") === t).length + ")",
+        "t:" + t
+      ))
+    );
+    el("topic-list").replaceChildren(...historyTopics().filter(Boolean).map(t => new Option(t)));
+    deckSelect.value = [...deckSelect.options].some(o => o.value === prev) ? prev : "all";
+    return;
+  }
   deckSelect.innerHTML =
     '<option value="all">Todos os baralhos (' + allCards().length + " cartões)</option>" +
     DECKS.map((d, i) => {
@@ -855,9 +946,34 @@ function refreshDeckOptions() {
     '<option value="custom">Minhas palavras (' + customCards.length + ")</option>";
   deckSelect.value = [...deckSelect.options].some(o => o.value === prev) ? prev : "all";
 }
-topUpFromBacklog();
-refreshDeckOptions();
+const SUBTITLE_LANG = el("subtitle").textContent;
 
+function setMode(m) {
+  mode = m;
+  try { localStorage.setItem(MODE_KEY, JSON.stringify(m)); } catch {}
+  known = loadKnown();
+  deckFilter = "all";
+  const isHistory = m === "history";
+  document.querySelectorAll(".mode-switch .pill-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.mode === m));
+  el("title").innerHTML = isHistory
+    ? '<span class="flag">📜</span> Flashcards de História'
+    : '<span class="flag">🇪🇸</span> Flashcards de Espanhol';
+  el("subtitle").textContent = isHistory
+    ? "Crie seus próprios cartões com perguntas, datas e fatos históricos. Clique no cartão para virar; tudo fica salvo no navegador."
+    : SUBTITLE_LANG;
+  document.title = isHistory ? "Flashcards de História" : "Flashcards de Espanhol";
+  el("direction-btn").style.display = isHistory ? "none" : "";
+  el("add-btn").title = isHistory ? "Adicionar cartão de história" : "Adicionar palavra";
+  deckSelect.value = "all";
+  refreshDeckOptions();
+  rebuildPool(true);
+}
+
+topUpFromBacklog();
+
+document.querySelectorAll(".mode-switch .pill-btn").forEach(b =>
+  b.addEventListener("click", () => { if (b.dataset.mode !== mode) setMode(b.dataset.mode); }));
 deckSelect.addEventListener("change", () => { deckFilter = deckSelect.value; rebuildPool(true); });
 el("direction-btn").addEventListener("click", () => {
   direction = direction === "es-pt" ? "pt-es" : "es-pt";
@@ -879,7 +995,32 @@ el("again-btn").addEventListener("click", markAgain);
 el("got-it-btn").addEventListener("click", markGotIt);
 el("delete-btn").addEventListener("click", deleteCurrent);
 
-el("add-btn").addEventListener("click", () => addDialog.showModal());
+el("add-btn").addEventListener("click", () =>
+  (mode === "history" ? historyDialog : addDialog).showModal());
+el("cancel-history-btn").addEventListener("click", () => historyDialog.close());
+el("history-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = el("h-q").value.trim();
+  const a = el("h-a").value.trim();
+  if (!q || !a) return;
+  const card = {
+    id: "h-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    q, a,
+    date: el("h-date").value.trim(),
+    topic: el("h-topic").value.trim(),
+    details: el("h-details").value.trim()
+  };
+  historyCards.push(card);
+  saveHistory();
+  refreshDeckOptions();
+  if (deckFilter === "all" || deckFilter === "t:" + card.topic) {
+    pool.push({ ...card, deck: "history" });
+    order.push(pool.length - 1);
+  }
+  render();
+  el("history-form").reset();
+  historyDialog.close();
+});
 el("cancel-add-btn").addEventListener("click", () => addDialog.close());
 el("add-form").addEventListener("submit", e => {
   e.preventDefault();
@@ -907,8 +1048,8 @@ el("add-form").addEventListener("submit", e => {
 });
 
 document.addEventListener("keydown", e => {
-  if (addDialog.open) return;
-  if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
+  if (addDialog.open || historyDialog.open) return;
+  if (["SELECT", "INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
   switch (e.key) {
     case " ": case "Enter": e.preventDefault(); flip(); break;
     case "ArrowRight": move(1); break;
@@ -919,7 +1060,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-rebuildPool(true);
+setMode(mode);
 </script>
 
 </body>

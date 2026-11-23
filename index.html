@@ -184,6 +184,31 @@
     position: absolute; bottom: 16px;
     font-size: 0.75rem; color: var(--text-muted);
   }
+  .speak-btn {
+    position: absolute; top: 12px; left: 14px;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit; font-size: 1.05rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .speak-btn:hover { border-color: var(--accent); }
+  .speak-btn.speaking, .speak-ex-btn.speaking { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .speak-ex-btn {
+    position: absolute; bottom: 12px;
+    font: inherit; font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .speak-ex-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .speak-btn[hidden], .speak-ex-btn[hidden] { display: none; }
 
   .nav-row {
     display: flex; align-items: center; gap: 16px;
@@ -321,14 +346,17 @@
       <div class="card-face card-front">
         <span class="card-lang" id="front-lang">Español</span>
         <span class="card-known-badge">✓ aprendido</span>
+        <button class="speak-btn" id="speak-front" title="Ouvir pronúncia (P)" aria-label="Ouvir pronúncia" hidden>🔊</button>
         <div class="card-word" id="front-word"></div>
         <div class="card-hint">clique ou aperte espaço para virar</div>
       </div>
       <div class="card-face card-back">
         <span class="card-lang" id="back-lang">Português</span>
+        <button class="speak-btn" id="speak-back" title="Ouvir pronúncia (P)" aria-label="Ouvir pronúncia" hidden>🔊</button>
         <div class="card-word" id="back-word"></div>
         <div class="card-example" id="back-example"></div>
         <div class="card-note" id="back-note"></div>
+        <button class="speak-ex-btn" id="speak-ex" title="Ouvir a frase de exemplo" hidden>🔊 ouvir a frase</button>
       </div>
     </div>
   </div>
@@ -415,7 +443,7 @@
 </dialog>
 
 <footer>
-  Atalhos: <kbd>espaço</kbd> virar · <kbd>←</kbd><kbd>→</kbd> navegar · <kbd>1</kbd> de novo · <kbd>2</kbd> acertei · <kbd>S</kbd> embaralhar
+  Atalhos: <kbd>espaço</kbd> virar · <kbd>←</kbd><kbd>→</kbd> navegar · <kbd>1</kbd> de novo · <kbd>2</kbd> acertei · <kbd>S</kbd> embaralhar · <kbd>P</kbd> ouvir pronúncia
 </footer>
 
 <script src="backlog.js"></script>
@@ -679,7 +707,7 @@ const DECKS = [
 // Cards keep the foreign word under `field` ("es" / "fr"); langCards() exposes it as `w`.
 const LANGS = {
   es: {
-    flag: "🇪🇸", title: "Flashcards de Espanhol", code: "ES", name: "Español", field: "es",
+    flag: "🇪🇸", title: "Flashcards de Espanhol", code: "ES", name: "Español", field: "es", speech: "es-ES",
     subtitle: "200 palavras e expressões que enganam quem fala português — sem cognatos. Clique no cartão para virar; o progresso fica salvo no navegador.",
     done: "¡Felicidades!",
     decks: DECKS, backlog: BACKLOG,
@@ -692,7 +720,7 @@ const LANGS = {
     form: { word: "Espanhol *", wordPh: "la ventana", ptPh: "janela", ex: "Frase de exemplo em espanhol (opcional)", exPh: "Abre la ventana.", exPtPh: "Abre a janela." }
   },
   fr: {
-    flag: "🇫🇷", title: "Flashcards de Francês", code: "FR", name: "Français", field: "fr",
+    flag: "🇫🇷", title: "Flashcards de Francês", code: "FR", name: "Français", field: "fr", speech: "fr-FR",
     subtitle: "200 palavras e expressões do francês que não se parecem com o português — e falsos amigos. Clique no cartão para virar; o progresso fica salvo no navegador.",
     done: "Félicitations !",
     decks: FRENCH_DECKS, backlog: [],
@@ -832,6 +860,81 @@ function currentCard() {
   return pool.length ? pool[order[pos]] : null;
 }
 
+// --- Pronunciation (browser text-to-speech, no audio files needed) ---
+const canSpeak = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+let voices = [];
+
+function normTag(t) { return (t || "").replace("_", "-").toLowerCase(); }
+
+// Prefer an exact locale match (fr-FR over fr-CA), then higher-quality voices.
+function pickVoice(tag) {
+  const want = normTag(tag);
+  const prefix = want.slice(0, 2);
+  const score = v => (normTag(v.lang) === want ? 2 : 0) + (/premium|enhanced|natural|google/i.test(v.name) ? 1 : 0);
+  return voices
+    .filter(v => normTag(v.lang).startsWith(prefix))
+    .sort((a, b) => score(b) - score(a))[0] || null;
+}
+
+// Voices load asynchronously; until they do, assume the browser can speak the language.
+function hasVoiceFor(tag) {
+  return !voices.length || !!pickVoice(tag);
+}
+
+// "l'essence (f.)" → "l'essence"; "borracho / borracha" → "borracho, borracha"
+function speakableText(s) {
+  return (s || "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s*\/\s*/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stopSpeaking() {
+  if (canSpeak) speechSynthesis.cancel();
+  document.querySelectorAll(".speaking").forEach(b => b.classList.remove("speaking"));
+}
+
+function speak(text, btn) {
+  if (!canSpeak || mode === "history" || !text) return;
+  stopSpeaking();
+  const u = new SpeechSynthesisUtterance(speakableText(text));
+  u.lang = lang.speech;
+  const v = pickVoice(lang.speech);
+  if (v) u.voice = v;
+  u.rate = 0.9;   // a touch slower than normal, easier to follow
+  if (btn) {
+    btn.classList.add("speaking");
+    u.onend = u.onerror = () => btn.classList.remove("speaking");
+  }
+  speechSynthesis.speak(u);
+}
+
+function speakWord(btn) {
+  const card = currentCard();
+  if (card) speak(card.w, btn);
+}
+function speakExample(btn) {
+  const card = currentCard();
+  if (card && card.ex) speak(card.ex.split("\n")[0], btn);   // first line is the foreign sentence
+}
+
+// The word button sits on whichever face shows the foreign word.
+function updateSpeakButtons(card) {
+  const ok = !!card && canSpeak && mode !== "history" && hasVoiceFor(lang.speech);
+  el("speak-front").hidden = !(ok && direction === "fwd");
+  el("speak-back").hidden = !(ok && direction === "rev");
+  el("speak-ex").hidden = !(ok && card.ex);
+}
+
+if (canSpeak) {
+  voices = speechSynthesis.getVoices();
+  speechSynthesis.addEventListener("voiceschanged", () => {
+    voices = speechSynthesis.getVoices();
+    updateSpeakButtons(currentCard());
+  });
+}
+
 function render() {
   const card = currentCard();
   const empty = !card;
@@ -870,6 +973,8 @@ function render() {
     el("back-example").textContent = card.ex || "";
     el("back-note").textContent = card.note || "";
   }
+  stopSpeaking();
+  updateSpeakButtons(card);
   if (!empty) {
     cardEl.classList.toggle("flipped", flipped);
     cardEl.classList.toggle("known", known.has(card.id));
@@ -1046,6 +1151,10 @@ el("reset-btn").addEventListener("click", () => {
   rebuildPool(true);
 });
 cardEl.addEventListener("click", flip);
+// stopPropagation keeps a tap on the speaker from also flipping the card.
+el("speak-front").addEventListener("click", e => { e.stopPropagation(); speakWord(e.currentTarget); });
+el("speak-back").addEventListener("click", e => { e.stopPropagation(); speakWord(e.currentTarget); });
+el("speak-ex").addEventListener("click", e => { e.stopPropagation(); speakExample(e.currentTarget); });
 el("prev-btn").addEventListener("click", () => move(-1));
 el("next-btn").addEventListener("click", () => move(1));
 el("again-btn").addEventListener("click", markAgain);
@@ -1114,6 +1223,11 @@ document.addEventListener("keydown", e => {
     case "1": markAgain(); break;
     case "2": markGotIt(); break;
     case "s": case "S": rebuildPool(true); break;
+    case "p": case "P": {
+      const btn = el(direction === "fwd" ? "speak-front" : "speak-back");
+      if (!btn.hidden) speakWord(btn);
+      break;
+    }
   }
 });
 
